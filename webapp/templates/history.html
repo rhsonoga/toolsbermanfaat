@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Riwayat Konversi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Riwayat Konversi Anda</h1>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul class="flashes">
+            {% for message in messages %}
+              <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+        {% if history %}
+        <div class="table-box">
+        <table>
+            <tr>
+                <th>Nama File</th>
+                <th>Waktu</th>
+                <th>Download</th>
+                <th>Hapus</th>
+            </tr>
+            {% for item in history %}
+            <tr>
+                <td>{{ item.filename }}</td>
+                <td>{{ item.time }}</td>
+                <td><a href="{{ url_for('download', id=item.id) }}">Download</a></td>
+                <td>
+                    <form action="{{ url_for('delete', id=item.id) }}" method="post" style="display:inline;">
+                        <button type="submit" onclick="return confirm('Yakin hapus file ini?')">Hapus</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        </div>
+        {% else %}
+        <p>Belum ada riwayat konversi.</p>
+        {% endif %}
+        <div class="nav-link">
+            <a href="{{ url_for('index') }}">Kembali ke Upload</a>
+        </div>
+    </div>
+</body>
+</html>
