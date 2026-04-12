@@ -1,7 +1,8 @@
 import os
 import json
 import uuid
-from flask import Flask, request, render_template, send_from_directory, redirect, url_for, session, flash
+import tempfile
+from flask import Flask, request, render_template, send_from_directory, send_file, redirect, url_for, session, flash
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from contextlib import contextmanager
@@ -31,6 +32,15 @@ if not IS_VERCEL:
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def make_job_dir(tool_name):
+    if IS_VERCEL:
+        return tempfile.mkdtemp(prefix=f"{tool_name}_")
+    job_id = str(uuid.uuid4())
+    job_dir = os.path.join(app.config['RESULT_FOLDER'], tool_name, job_id)
+    os.makedirs(job_dir, exist_ok=True)
+    return job_dir
 
 
 @contextmanager
@@ -185,10 +195,6 @@ def cable_calculate():
 
 @app.route('/boq/convert', methods=['POST'])
 def boq_convert():
-    if IS_VERCEL:
-        flash('Fitur file processing dinonaktifkan di Vercel karena filesystem read-only.')
-        return render_template('main.html', **base_context(active_menu='boq', form_state=request.form.to_dict(flat=True)))
-
     file = request.files.get('boq_file')
     mode = (request.form.get('boq_mode') or request.form.get('boq_action') or 'CLUSTER').upper()
     if not file or not file.filename:
@@ -198,9 +204,7 @@ def boq_convert():
         flash('Format file BOQ harus .kmz')
         return render_template('main.html', **base_context(active_menu='boq', form_state=request.form.to_dict(flat=True)))
 
-    job_id = str(uuid.uuid4())
-    job_dir = os.path.join(app.config['RESULT_FOLDER'], 'boq', job_id)
-    os.makedirs(job_dir, exist_ok=True)
+    job_dir = make_job_dir('boq')
     filename = secure_filename(file.filename)
     kmz_path = os.path.join(job_dir, filename)
     file.save(kmz_path)
@@ -208,6 +212,9 @@ def boq_convert():
     try:
         with in_workdir(job_dir):
             mid, final = convert(kmz_path, mode=mode)
+        if IS_VERCEL:
+            final_path = os.path.join(job_dir, final)
+            return send_file(final_path, as_attachment=True, download_name=final)
         session['boq_mid_file'] = os.path.join(job_dir, mid)
         session['boq_final_file'] = os.path.join(job_dir, final)
         session['boq_source_display'] = filename
@@ -259,8 +266,7 @@ def _hpdb_save_upload(file_storage):
     runtime = get_hpdb_runtime()
     job_id = runtime.get('job_id') or str(uuid.uuid4())
     runtime['job_id'] = job_id
-    job_dir = os.path.join(app.config['RESULT_FOLDER'], 'hpdb', job_id)
-    os.makedirs(job_dir, exist_ok=True)
+    job_dir = make_job_dir('hpdb')
     filename = secure_filename(file_storage.filename)
     kmz_path = os.path.join(job_dir, filename)
     file_storage.save(kmz_path)
@@ -274,8 +280,29 @@ def _hpdb_save_upload(file_storage):
 def hpdb_process():
     action = (request.form.get('hpdb_action') or 'step1').lower()
     if IS_VERCEL:
-        flash('Fitur file processing dinonaktifkan di Vercel karena filesystem read-only.')
-        return render_template('main.html', **base_context(active_menu='hpdb', form_state=request.form.to_dict(flat=True)))
+        file = request.files.get('hpdb_file')
+        if not file or not file.filename:
+            flash('Di Vercel, pilih file KMZ lalu jalankan STEP 1.')
+            return render_template('main.html', **base_context(active_menu='hpdb', form_state=request.form.to_dict(flat=True)))
+        if not allowed_file(file.filename):
+            flash('Format file HPDB harus .kmz')
+            return render_template('main.html', **base_context(active_menu='hpdb', form_state=request.form.to_dict(flat=True)))
+
+        runtime = _hpdb_save_upload(file)
+        try:
+            with in_workdir(runtime['workdir']):
+                se = SessionEngine(runtime['kmz_path'])
+                parsed = se.step1_convert()
+                if action == 'step1':
+                    step1_path = os.path.join(runtime['workdir'], '1.Hasil_Convert.xlsx')
+                    return send_file(step1_path, as_attachment=True, download_name='1.Hasil_Convert.xlsx')
+                final_file = se.step2_inject_basic()
+                se.step3_sync_pole()
+                final_path = os.path.join(runtime['workdir'], final_file)
+                return send_file(final_path, as_attachment=True, download_name=os.path.basename(final_path))
+        except Exception as e:
+            flash(f'HPDB error: {e}')
+            return render_template('main.html', **base_context(active_menu='hpdb', form_state=request.form.to_dict(flat=True)))
 
     runtime = get_hpdb_runtime()
     try:
