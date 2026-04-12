@@ -212,9 +212,6 @@ def boq_convert():
     try:
         with in_workdir(job_dir):
             mid, final = convert(kmz_path, mode=mode)
-        if IS_VERCEL:
-            final_path = os.path.join(job_dir, final)
-            return send_file(final_path, as_attachment=True, download_name=final)
         session['boq_mid_file'] = os.path.join(job_dir, mid)
         session['boq_final_file'] = os.path.join(job_dir, final)
         session['boq_source_display'] = filename
@@ -279,76 +276,61 @@ def _hpdb_save_upload(file_storage):
 @app.route('/hpdb/process', methods=['POST'])
 def hpdb_process():
     action = (request.form.get('hpdb_action') or 'step1').lower()
-    if IS_VERCEL:
-        file = request.files.get('hpdb_file')
-        if not file or not file.filename:
-            flash('Di Vercel, pilih file KMZ lalu jalankan STEP 1.')
-            return render_template('main.html', **base_context(active_menu='hpdb', form_state=request.form.to_dict(flat=True)))
-        if not allowed_file(file.filename):
-            flash('Format file HPDB harus .kmz')
-            return render_template('main.html', **base_context(active_menu='hpdb', form_state=request.form.to_dict(flat=True)))
-
-        runtime = _hpdb_save_upload(file)
-        try:
-            with in_workdir(runtime['workdir']):
-                se = SessionEngine(runtime['kmz_path'])
-                parsed = se.step1_convert()
-                if action == 'step1':
-                    step1_path = os.path.join(runtime['workdir'], '1.Hasil_Convert.xlsx')
-                    return send_file(step1_path, as_attachment=True, download_name='1.Hasil_Convert.xlsx')
-                final_file = se.step2_inject_basic()
-                se.step3_sync_pole()
-                final_path = os.path.join(runtime['workdir'], final_file)
-                return send_file(final_path, as_attachment=True, download_name=os.path.basename(final_path))
-        except Exception as e:
-            flash(f'HPDB error: {e}')
-            return render_template('main.html', **base_context(active_menu='hpdb', form_state=request.form.to_dict(flat=True)))
-
     runtime = get_hpdb_runtime()
     try:
         if action == 'reset':
             return hpdb_reset()
 
-        if action == 'step1':
-            file = request.files.get('hpdb_file')
-            if not file or not file.filename:
-                flash('Pilih file KMZ untuk HPDB Converter.')
-                return render_template('main.html', **base_context(active_menu='hpdb', form_state=request.form.to_dict(flat=True)))
+        file = request.files.get('hpdb_file')
+        if file and file.filename:
             if not allowed_file(file.filename):
                 flash('Format file HPDB harus .kmz')
                 return render_template('main.html', **base_context(active_menu='hpdb', form_state=request.form.to_dict(flat=True)))
-
             runtime = _hpdb_save_upload(file)
-            add_hpdb_log('Tahap 1: Mengonversi KMZ...')
-            with in_workdir(runtime['workdir']):
-                se = SessionEngine(runtime['kmz_path'])
-                runtime['session_engine'] = se
-                runtime['parsed_data'] = se.step1_convert()
+            runtime['log'] = []
+
+        if not runtime.get('kmz_path') or not os.path.exists(runtime.get('kmz_path', '')):
+            flash('Pilih file KMZ terlebih dahulu (Browse), lalu klik STEP 1/2/3.')
+            return render_template('main.html', **base_context(active_menu='hpdb', form_state=request.form.to_dict(flat=True)))
+
+        with in_workdir(runtime['workdir']):
+            se = SessionEngine(runtime['kmz_path'])
+
+            if action == 'step1':
+                add_hpdb_log('Tahap 1: Mengonversi KMZ...')
+                se.step1_convert()
                 runtime['step1_file'] = os.path.join(runtime['workdir'], '1.Hasil_Convert.xlsx')
-            add_hpdb_log('✅ Tahap 1 Selesai!')
-            flash('Tahap 1 HPDB selesai.')
+                add_hpdb_log('✅ Tahap 1 Selesai!')
+                flash('Tahap 1 HPDB selesai.')
 
-        elif action == 'step2':
-            if not runtime.get('session_engine'):
-                flash('Jalankan Tahap 1 dulu!')
-                return render_template('main.html', **base_context(active_menu='hpdb', form_state=request.form.to_dict(flat=True)))
-            add_hpdb_log('Tahap 2: Injeksi data dasar...')
-            with in_workdir(runtime['workdir']):
-                runtime['hpdb_file'] = runtime['session_engine'].step2_inject_basic()
+            elif action == 'step2':
+                add_hpdb_log('Tahap 1: Mengonversi KMZ...')
+                se.step1_convert()
+                runtime['step1_file'] = os.path.join(runtime['workdir'], '1.Hasil_Convert.xlsx')
+                add_hpdb_log('✅ Tahap 1 Selesai!')
+                add_hpdb_log('Tahap 2: Injeksi data dasar...')
+                runtime['hpdb_file'] = se.step2_inject_basic()
                 runtime['hpdb_path'] = os.path.abspath(runtime['hpdb_file'])
-            add_hpdb_log(f"✅ Tahap 2 Selesai! File: {runtime['hpdb_file']}")
-            flash('Tahap 2 HPDB selesai.')
+                add_hpdb_log(f"✅ Tahap 2 Selesai! File: {runtime['hpdb_file']}")
+                flash('Tahap 2 HPDB selesai.')
 
-        elif action == 'step3':
-            if not runtime.get('session_engine'):
-                flash('Jalankan Tahap 1 & 2 dulu!')
-                return render_template('main.html', **base_context(active_menu='hpdb', form_state=request.form.to_dict(flat=True)))
-            add_hpdb_log('Tahap 3: Sinkronisasi Kolom A-K...')
-            with in_workdir(runtime['workdir']):
-                runtime['session_engine'].step3_sync_pole()
-            runtime['final_file'] = runtime.get('hpdb_file') or os.path.join(runtime['workdir'], '2.HPDB_FINAL.xlsx')
-            add_hpdb_log('✅ Tahap 3 Selesai!')
-            flash('Semua tahapan selesai!')
+            elif action == 'step3':
+                add_hpdb_log('Tahap 1: Mengonversi KMZ...')
+                se.step1_convert()
+                runtime['step1_file'] = os.path.join(runtime['workdir'], '1.Hasil_Convert.xlsx')
+                add_hpdb_log('✅ Tahap 1 Selesai!')
+                add_hpdb_log('Tahap 2: Injeksi data dasar...')
+                runtime['hpdb_file'] = se.step2_inject_basic()
+                runtime['hpdb_path'] = os.path.abspath(runtime['hpdb_file'])
+                add_hpdb_log(f"✅ Tahap 2 Selesai! File: {runtime['hpdb_file']}")
+                add_hpdb_log('Tahap 3: Sinkronisasi Kolom A-K...')
+                se.step3_sync_pole()
+                runtime['final_file'] = runtime.get('hpdb_file') or os.path.join(runtime['workdir'], '2.HPDB_FINAL.xlsx')
+                add_hpdb_log('✅ Tahap 3 Selesai!')
+                flash('Semua tahapan selesai!')
+
+            else:
+                flash('Aksi HPDB tidak dikenali.')
 
         session.modified = True
     except Exception as e:
@@ -361,9 +343,7 @@ def hpdb_process():
 @app.route('/hpdb/reset', methods=['POST'])
 def hpdb_reset():
     runtime_id = get_runtime_id()
-    runtime = HPDB_RUNTIME.pop(runtime_id, None)
-    if runtime:
-        session['hpdb_log_override'] = []
+    HPDB_RUNTIME.pop(runtime_id, None)
     session.modified = True
     flash('Session HPDB di-reset.')
     return redirect(url_for('main_launcher'))
