@@ -122,8 +122,9 @@
                                 <input type="file" name="hpdb_file" id="hpdb_source_file" class="hidden-file" accept=".kmz">
                                 <button type="submit" class="tool-btn">STEP 1: CONVERTING KMZ</button>
                             </form>
-                            <form method="post" action="{{ url_for('hpdb_process') }}" class="inline-form">
+                            <form method="post" action="{{ url_for('hpdb_process') }}" enctype="multipart/form-data" class="inline-form">
                                 <input type="hidden" name="hpdb_action" value="step2">
+                                <input type="file" name="hpdb_file" id="hpdb_source_file_step2" class="hidden-file" accept=".kmz">
                                 <button type="submit" class="tool-btn">STEP 2: INJECT TO HPDB (BASIC)</button>
                             </form>
                         </div>
@@ -137,8 +138,9 @@
                             <input type="file" id="hpdb_basic_file" class="hidden-file" accept=".xlsx">
                             <button type="button" class="mini-btn" id="hpdbBasicBrowseBtn">Browse</button>
                         </div>
-                        <form method="post" action="{{ url_for('hpdb_process') }}" class="inline-form">
+                        <form method="post" action="{{ url_for('hpdb_process') }}" enctype="multipart/form-data" class="inline-form">
                             <input type="hidden" name="hpdb_action" value="step3">
+                            <input type="file" name="hpdb_file" id="hpdb_source_file_step3" class="hidden-file" accept=".kmz">
                             <button type="submit" class="tool-btn">STEP 3: SYNC KOLOM A-K (FINAL)</button>
                         </form>
                     </div>
@@ -356,6 +358,10 @@
     // Keep file input values in sync when desktop-like browse buttons are used.
     document.getElementById('hpdb_source_file').addEventListener('change', () => {
         const file = document.getElementById('hpdb_source_file').files[0];
+        const step2 = document.getElementById('hpdb_source_file_step2');
+        const step3 = document.getElementById('hpdb_source_file_step3');
+        if (step2) step2.files = document.getElementById('hpdb_source_file').files;
+        if (step3) step3.files = document.getElementById('hpdb_source_file').files;
         document.getElementById('hpdb_source_display').value = file ? file.name : '';
     });
     document.getElementById('boq_source_file').addEventListener('change', () => {
