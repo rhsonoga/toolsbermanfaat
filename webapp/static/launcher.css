@@ -13,13 +13,15 @@ body {
 }
 .launcher-root {
     display: flex;
-    width: 900px;
+    width: min(900px, calc(100vw - 20px));
+    max-width: 100%;
     height: 820px;
     background: #1a1a1a;
     border-radius: 4px;
-    overflow: hidden;
+    overflow: visible;
 }
 .sidebar-wrap {
+    flex: 0 0 auto;
     padding: 5px 2px 5px 5px;
     box-sizing: border-box;
 }
@@ -35,6 +37,7 @@ body {
 }
 .main-wrap {
     flex: 1;
+    min-width: 0;
     padding: 5px 5px 5px 2px;
     box-sizing: border-box;
 }
@@ -420,7 +423,9 @@ td form button {
 }
 @media (max-width: 700px) {
     .launcher-root { flex-direction: column; width: 100%; height: auto; }
-    .sidebar { width: 100vw; min-width: 0; flex-direction: column; height: auto; }
+    .sidebar-wrap { padding: 5px; }
+    .main-wrap { padding: 2px 5px 5px 5px; }
+    .sidebar { width: 100%; min-width: 0; flex-direction: column; height: auto; }
     .sidebar-title { padding: 18px 12px; font-size: 1em; }
     .sidebar-menu { flex-direction: row; gap: 6px; margin-top: 0; }
     .menu-btn { padding: 10px 10px; font-size: 1em; margin: 0 4px; }
