@@ -14,6 +14,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from boq_converter.main import convert
 
+IS_VERCEL = os.environ.get('VERCEL', False) or os.environ.get('VERCEL_ENV', False)
 UPLOAD_FOLDER = 'uploads'
 RESULT_FOLDER = 'results'
 ALLOWED_EXTENSIONS = {'kmz'}
@@ -23,8 +24,9 @@ app.secret_key = os.environ.get('SECRET_KEY', str(uuid.uuid4()))
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['RESULT_FOLDER'] = RESULT_FOLDER
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(RESULT_FOLDER, exist_ok=True)
+if not IS_VERCEL:
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    os.makedirs(RESULT_FOLDER, exist_ok=True)
 
 # --- Supabase setup placeholder ---
 # SUPABASE_URL = os.environ.get('SUPABASE_URL')
@@ -45,6 +47,10 @@ def get_client_ip():
 # --- Routes ---
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    if IS_VERCEL:
+        if request.method == 'POST':
+            flash('Fitur upload & konversi tidak tersedia di versi demo online. Silakan jalankan di server lokal untuk fitur penuh.')
+        return render_template('index.html', disable_upload=True)
     if request.method == 'POST':
         if 'file' not in request.files:
             flash('No file part')
@@ -85,7 +91,7 @@ def index():
         else:
             flash('File tidak valid!')
             return redirect(request.url)
-    return render_template('index.html')
+    return render_template('index.html', disable_upload=False)
 
 @app.route('/history')
 def history():
