@@ -7,7 +7,9 @@
     <link rel="stylesheet" href="/static/launcher.css">
 </head>
 <body>
+    <div class="launcher-host">
     <div class="launcher-root">
+        <div class="sidebar-wrap">
         <div class="sidebar">
             <div class="sidebar-title">CONVERTER V2.0</div>
             <div class="sidebar-menu">
@@ -16,7 +18,9 @@
                 <div class="menu-btn" data-panel="boq">BOQ_Converter</div>
             </div>
         </div>
+        </div>
 
+        <div class="main-wrap">
         <div class="main-area">
             {% with messages = get_flashed_messages() %}
             {% if messages %}
@@ -188,6 +192,8 @@
                 </div>
             </div>
         </div>
+        </div>
+    </div>
     </div>
 
     <div class="olt-modal" id="oltModal" aria-hidden="true">
@@ -217,9 +223,10 @@
         });
     });
 
-    setActive(menuBtns.length ? activeFromServer : 'home');
+    setActive(activeFromServer || 'home');
     if (activeFromServer === 'home' || !activeFromServer) {
         document.querySelector('.panel-home').style.display = 'block';
+        menuBtns.forEach(btn => btn.classList.remove('active'));
     }
 
     // Cable calculator behavior
