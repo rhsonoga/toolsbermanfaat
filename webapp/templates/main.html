@@ -26,9 +26,9 @@
         <div class="auth-strip" id="authStrip">{% if auth_user and auth_user.get('email') %}Login sebagai {{ auth_user.get('email') }}{% else %}Belum login{% endif %}</div>
 
         <div class="browser-tabs">
-            <button type="button" class="browser-tab active" data-browser-tab="kmz">KMZ CONVERTER</button>
-            <button type="button" class="browser-tab" data-browser-tab="tools">TOOLS CENTER</button>
-            <button type="button" class="browser-tab" data-browser-tab="history">HISTORY</button>
+            <button type="button" class="browser-tab" data-browser-tab="history">BACAAN</button>
+            <button type="button" class="browser-tab active" data-browser-tab="kmz">VIDEO TUTORIAL</button>
+            <button type="button" class="browser-tab" data-browser-tab="tools">ALAT TEMPUR</button>
         </div>
 
         <div class="browser-page active" data-browser-page="kmz">
@@ -294,7 +294,7 @@
 
     <script>
     const activeFromServer = "{{ active_menu or 'home' }}";
-    const supabaseReady = {{ 'true' if supabase_ready else 'false' }};
+    const supabaseReady = "{{ 'true' if supabase_ready else 'false' }}" === 'true';
     const menuBtns = document.querySelectorAll('.menu-btn');
     const panels = document.querySelectorAll('.panel');
     const browserTabs = document.querySelectorAll('.browser-tab');
