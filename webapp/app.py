@@ -22,6 +22,8 @@ app.secret_key = os.environ.get('SECRET_KEY', str(uuid.uuid4()))
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['RESULT_FOLDER'] = RESULT_FOLDER
 
+HPDB_RUNTIME = {}
+
 if not IS_VERCEL:
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     os.makedirs(RESULT_FOLDER, exist_ok=True)
@@ -53,6 +55,47 @@ def get_cable_config():
             'cable_types': ['FO 144C/12T', 'FO 48C/4T'],
             'cable_categories': ['AE - AE Aerial']
         }
+
+
+def get_runtime_id():
+    if 'runtime_id' not in session:
+        session['runtime_id'] = uuid.uuid4().hex
+        session.modified = True
+    return session['runtime_id']
+
+
+def get_hpdb_runtime():
+    runtime_id = get_runtime_id()
+    if runtime_id not in HPDB_RUNTIME:
+        HPDB_RUNTIME[runtime_id] = {
+            'session_engine': None,
+            'kmz_path': '',
+            'workdir': '',
+            'step1_file': '',
+            'final_file': '',
+            'log': [],
+            'hpdb_path': ''
+        }
+    return HPDB_RUNTIME[runtime_id]
+
+
+def add_hpdb_log(message):
+    runtime = get_hpdb_runtime()
+    runtime['log'].append(message)
+
+
+def get_hpdb_log_text():
+    runtime = get_hpdb_runtime()
+    return "\n".join(runtime['log'])
+
+
+def get_boq_session_state():
+    return {
+        'mid_file': session.get('boq_mid_file', ''),
+        'final_file': session.get('boq_final_file', ''),
+        'log': session.get('boq_log', []),
+        'mode': session.get('boq_mode_last', 'CLUSTER')
+    }
 
 
 def build_cable_report(form):
@@ -97,13 +140,26 @@ def add_history(entry):
     session.modified = True
 
 
-def base_context(active_menu='home', cable_report=''):
+def base_context(active_menu='home', cable_report='', form_state=None):
     cfg = get_cable_config()
+    form_state = form_state or {}
+    if get_hpdb_runtime().get('source_name') and not form_state.get('hpdb_source_display'):
+        form_state['hpdb_source_display'] = get_hpdb_runtime().get('source_name', '')
+    if get_hpdb_runtime().get('hpdb_path') and not form_state.get('hpdb_path_display'):
+        form_state['hpdb_path_display'] = get_hpdb_runtime().get('hpdb_path', '')
+    if session.get('boq_source_display') and not form_state.get('boq_source_display'):
+        form_state['boq_source_display'] = session.get('boq_source_display', '')
+    if session.get('boq_mode_last') and not form_state.get('boq_mode'):
+        form_state['boq_mode'] = session.get('boq_mode_last', '')
     return {
         'active_menu': active_menu,
         'disable_upload': bool(IS_VERCEL),
         'history': session.get('history', []),
         'cable_report': cable_report,
+        'form_state': form_state or {},
+        'hpdb_runtime': get_hpdb_runtime(),
+        'hpdb_log_text': get_hpdb_log_text(),
+        'boq_state': get_boq_session_state(),
         'line_names': cfg.get('line_names', []),
         'cable_types': cfg.get('cable_types', []),
         'categories': cfg.get('cable_categories', [])
@@ -118,28 +174,29 @@ def main_launcher():
 @app.route('/cable/calculate', methods=['POST'])
 def cable_calculate():
     try:
+        form_state = request.form.to_dict(flat=True)
         report = build_cable_report(request.form)
         flash('Cable Calculator berhasil dihitung.')
-        return render_template('main.html', **base_context(active_menu='cable', cable_report=report))
+        return render_template('main.html', **base_context(active_menu='cable', cable_report=report, form_state=form_state))
     except Exception as e:
         flash(f'Cable Calculator error: {e}')
-        return render_template('main.html', **base_context(active_menu='cable'))
+        return render_template('main.html', **base_context(active_menu='cable', form_state=request.form.to_dict(flat=True)))
 
 
 @app.route('/boq/convert', methods=['POST'])
 def boq_convert():
     if IS_VERCEL:
         flash('Fitur file processing dinonaktifkan di Vercel karena filesystem read-only.')
-        return render_template('main.html', **base_context(active_menu='boq'))
+        return render_template('main.html', **base_context(active_menu='boq', form_state=request.form.to_dict(flat=True)))
 
     file = request.files.get('boq_file')
-    mode = (request.form.get('boq_mode') or 'CLUSTER').upper()
+    mode = (request.form.get('boq_mode') or request.form.get('boq_action') or 'CLUSTER').upper()
     if not file or not file.filename:
         flash('Pilih file KMZ untuk BOQ Converter.')
-        return render_template('main.html', **base_context(active_menu='boq'))
+        return render_template('main.html', **base_context(active_menu='boq', form_state=request.form.to_dict(flat=True)))
     if not allowed_file(file.filename):
         flash('Format file BOQ harus .kmz')
-        return render_template('main.html', **base_context(active_menu='boq'))
+        return render_template('main.html', **base_context(active_menu='boq', form_state=request.form.to_dict(flat=True)))
 
     job_id = str(uuid.uuid4())
     job_dir = os.path.join(app.config['RESULT_FOLDER'], 'boq', job_id)
@@ -151,65 +208,162 @@ def boq_convert():
     try:
         with in_workdir(job_dir):
             mid, final = convert(kmz_path, mode=mode)
-        add_history({
-            'id': job_id,
-            'tool': 'BOQ Converter',
-            'filename': filename,
-            'result': os.path.join(job_dir, final),
-            'extra': os.path.join(job_dir, mid),
-            'time': datetime.now().isoformat(timespec='seconds')
-        })
+        session['boq_mid_file'] = os.path.join(job_dir, mid)
+        session['boq_final_file'] = os.path.join(job_dir, final)
+        session['boq_source_display'] = filename
+        session['boq_mode_last'] = mode
+        session['boq_log'] = [
+            f"MODE AKTIF: {mode}",
+            "Sedang memproses... mohon tunggu.",
+            f"✅ PROSES {mode} BERHASIL!",
+            "Silakan klik tombol Download di bawah."
+        ]
+        session.modified = True
         flash(f'BOQ Converter berhasil ({mode}).')
     except Exception as e:
+        session['boq_log'] = [f"❌ ERROR: {str(e)}"]
+        session.modified = True
         flash(f'BOQ Converter error: {e}')
 
-    return render_template('main.html', **base_context(active_menu='boq'))
+    return render_template('main.html', **base_context(active_menu='boq', form_state=request.form.to_dict(flat=True)))
+
+
+@app.route('/boq/download/mid')
+def boq_download_mid():
+    path = session.get('boq_mid_file', '')
+    if not path or not os.path.exists(path):
+        flash('Jalankan proses BOQ terlebih dahulu!')
+        return redirect(url_for('main_launcher'))
+    return send_from_directory(os.path.dirname(path), os.path.basename(path), as_attachment=True)
+
+
+@app.route('/boq/download/final')
+def boq_download_final():
+    path = session.get('boq_final_file', '')
+    if not path or not os.path.exists(path):
+        flash('Jalankan proses BOQ terlebih dahulu!')
+        return redirect(url_for('main_launcher'))
+    return send_from_directory(os.path.dirname(path), os.path.basename(path), as_attachment=True)
+
+
+@app.route('/boq/reset', methods=['POST'])
+def boq_reset():
+    for key in ['boq_mid_file', 'boq_final_file', 'boq_log', 'boq_mode_last', 'boq_source_display']:
+        session.pop(key, None)
+    session.modified = True
+    flash('System Ready. Pilih file KMZ.')
+    return redirect(url_for('main_launcher'))
+
+
+def _hpdb_save_upload(file_storage):
+    runtime = get_hpdb_runtime()
+    job_id = runtime.get('job_id') or str(uuid.uuid4())
+    runtime['job_id'] = job_id
+    job_dir = os.path.join(app.config['RESULT_FOLDER'], 'hpdb', job_id)
+    os.makedirs(job_dir, exist_ok=True)
+    filename = secure_filename(file_storage.filename)
+    kmz_path = os.path.join(job_dir, filename)
+    file_storage.save(kmz_path)
+    runtime['kmz_path'] = kmz_path
+    runtime['workdir'] = job_dir
+    runtime['source_name'] = filename
+    return runtime
 
 
 @app.route('/hpdb/process', methods=['POST'])
 def hpdb_process():
+    action = (request.form.get('hpdb_action') or 'step1').lower()
     if IS_VERCEL:
         flash('Fitur file processing dinonaktifkan di Vercel karena filesystem read-only.')
-        return render_template('main.html', **base_context(active_menu='hpdb'))
+        return render_template('main.html', **base_context(active_menu='hpdb', form_state=request.form.to_dict(flat=True)))
 
-    file = request.files.get('hpdb_file')
-    if not file or not file.filename:
-        flash('Pilih file KMZ untuk HPDB Converter.')
-        return render_template('main.html', **base_context(active_menu='hpdb'))
-    if not allowed_file(file.filename):
-        flash('Format file HPDB harus .kmz')
-        return render_template('main.html', **base_context(active_menu='hpdb'))
-
-    job_id = str(uuid.uuid4())
-    job_dir = os.path.join(app.config['RESULT_FOLDER'], 'hpdb', job_id)
-    os.makedirs(job_dir, exist_ok=True)
-    filename = secure_filename(file.filename)
-    kmz_path = os.path.join(job_dir, filename)
-    file.save(kmz_path)
-
+    runtime = get_hpdb_runtime()
     try:
-        with in_workdir(job_dir):
-            se = SessionEngine(kmz_path)
-            se.step1_convert()
-            final_file = se.step2_inject_basic()
-            se.step3_sync_pole()
-        add_history({
-            'id': job_id,
-            'tool': 'HPDB Converter',
-            'filename': filename,
-            'result': os.path.join(job_dir, final_file),
-            'extra': os.path.join(job_dir, '1.Hasil_Convert.xlsx'),
-            'time': datetime.now().isoformat(timespec='seconds')
-        })
-        flash('HPDB Converter selesai sampai Step 3 (Final).')
-    except Exception as e:
-        flash(f'HPDB Converter error: {e}')
+        if action == 'reset':
+            return hpdb_reset()
 
-    return render_template('main.html', **base_context(active_menu='hpdb'))
+        if action == 'step1':
+            file = request.files.get('hpdb_file')
+            if not file or not file.filename:
+                flash('Pilih file KMZ untuk HPDB Converter.')
+                return render_template('main.html', **base_context(active_menu='hpdb', form_state=request.form.to_dict(flat=True)))
+            if not allowed_file(file.filename):
+                flash('Format file HPDB harus .kmz')
+                return render_template('main.html', **base_context(active_menu='hpdb', form_state=request.form.to_dict(flat=True)))
+
+            runtime = _hpdb_save_upload(file)
+            add_hpdb_log('Tahap 1: Mengonversi KMZ...')
+            with in_workdir(runtime['workdir']):
+                se = SessionEngine(runtime['kmz_path'])
+                runtime['session_engine'] = se
+                runtime['parsed_data'] = se.step1_convert()
+                runtime['step1_file'] = os.path.join(runtime['workdir'], '1.Hasil_Convert.xlsx')
+            add_hpdb_log('✅ Tahap 1 Selesai!')
+            flash('Tahap 1 HPDB selesai.')
+
+        elif action == 'step2':
+            if not runtime.get('session_engine'):
+                flash('Jalankan Tahap 1 dulu!')
+                return render_template('main.html', **base_context(active_menu='hpdb', form_state=request.form.to_dict(flat=True)))
+            add_hpdb_log('Tahap 2: Injeksi data dasar...')
+            with in_workdir(runtime['workdir']):
+                runtime['hpdb_file'] = runtime['session_engine'].step2_inject_basic()
+                runtime['hpdb_path'] = os.path.abspath(runtime['hpdb_file'])
+            add_hpdb_log(f"✅ Tahap 2 Selesai! File: {runtime['hpdb_file']}")
+            flash('Tahap 2 HPDB selesai.')
+
+        elif action == 'step3':
+            if not runtime.get('session_engine'):
+                flash('Jalankan Tahap 1 & 2 dulu!')
+                return render_template('main.html', **base_context(active_menu='hpdb', form_state=request.form.to_dict(flat=True)))
+            add_hpdb_log('Tahap 3: Sinkronisasi Kolom A-K...')
+            with in_workdir(runtime['workdir']):
+                runtime['session_engine'].step3_sync_pole()
+            runtime['final_file'] = runtime.get('hpdb_file') or os.path.join(runtime['workdir'], '2.HPDB_FINAL.xlsx')
+            add_hpdb_log('✅ Tahap 3 Selesai!')
+            flash('Semua tahapan selesai!')
+
+        session.modified = True
+    except Exception as e:
+        add_hpdb_log(f"Error {action.upper()}: {e}")
+        flash(f'HPDB error: {e}')
+
+    return render_template('main.html', **base_context(active_menu='hpdb', form_state=request.form.to_dict(flat=True)))
+
+
+@app.route('/hpdb/reset', methods=['POST'])
+def hpdb_reset():
+    runtime_id = get_runtime_id()
+    runtime = HPDB_RUNTIME.pop(runtime_id, None)
+    if runtime:
+        session['hpdb_log_override'] = []
+    session.modified = True
+    flash('Session HPDB di-reset.')
+    return redirect(url_for('main_launcher'))
+
+
+@app.route('/hpdb/download/step1')
+def hpdb_download_step1():
+    runtime = get_hpdb_runtime()
+    path = runtime.get('step1_file')
+    if not path or not os.path.exists(path):
+        flash('Jalankan Tahap 1 terlebih dahulu!')
+        return redirect(url_for('main_launcher'))
+    return send_from_directory(os.path.dirname(path), os.path.basename(path), as_attachment=True)
+
+
+@app.route('/hpdb/download/final')
+def hpdb_download_final():
+    runtime = get_hpdb_runtime()
+    path = runtime.get('final_file') or runtime.get('hpdb_path')
+    if not path or not os.path.exists(path):
+        flash('Jalankan Tahap 2 & 3 terlebih dahulu!')
+        return redirect(url_for('main_launcher'))
+    return send_from_directory(os.path.dirname(path), os.path.basename(path), as_attachment=True)
 
 @app.route('/history')
 def history():
-    return render_template('main.html', **base_context(active_menu='history'))
+    return redirect(url_for('main_launcher'))
 
 @app.route('/download/<id>')
 def download(id):

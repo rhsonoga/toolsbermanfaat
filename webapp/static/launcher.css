@@ -52,8 +52,9 @@ body {
 .main-area {
     flex: 1;
     background: #111111;
-    padding: 40px 32px;
+    padding: 20px 20px 20px 20px;
     min-width: 0;
+    overflow: auto;
 }
 .welcome-label {
     color: #fff;
@@ -63,7 +64,7 @@ body {
     background: #222;
     border-radius: 8px;
     padding: 32px 24px;
-    margin-top: 40px;
+    margin-top: 0;
     box-shadow: 0 2px 8px #0002;
 }
 .flash-wrap {
@@ -82,11 +83,123 @@ body {
 .panel {
     display: none;
 }
+.panel-home {
+    display: block;
+}
+.tool-shell {
+    background: #111111;
+    padding: 10px 10px 20px 10px;
+    color: #fff;
+}
 .panel-title {
     color: #E95420;
-    font-size: 1.1em;
+    font-size: 1.2em;
     font-weight: bold;
     margin-bottom: 14px;
+}
+.tool-grid {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 8px 16px;
+    align-items: center;
+    max-width: 760px;
+}
+.field-label,
+.group-label {
+    color: #fff;
+    font-size: 0.95em;
+    font-weight: bold;
+}
+.field-control,
+.log-box,
+.report-box,
+.olt-notes {
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Ubuntu', Arial, sans-serif;
+    font-size: 0.95em;
+    border: none;
+    border-radius: 4px;
+}
+.field-control {
+    background: #fff;
+    color: #000;
+    padding: 8px 10px;
+    min-height: 36px;
+}
+.field-control:disabled {
+    opacity: 0.6;
+}
+.olt-row,
+.path-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.mini-btn,
+.plain-btn,
+.accent-btn,
+.tool-btn,
+.reset-btn,
+.download-btn {
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Ubuntu', Arial, sans-serif;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+.mini-btn {
+    padding: 8px 12px;
+    background: #3D3C3D;
+    color: #fff;
+    min-width: 88px;
+}
+.mini-btn:hover,
+.tool-btn:hover,
+.accent-btn:hover,
+.download-btn:hover,
+.reset-btn:hover {
+    background: #E95420;
+    color: #fff;
+}
+.tool-actions {
+    max-width: 760px;
+    margin-top: 12px;
+}
+.action-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+.tool-btn,
+.accent-btn,
+.plain-btn,
+.download-btn,
+.reset-btn {
+    padding: 10px 14px;
+}
+.tool-btn,
+.accent-btn {
+    background: #3D3C3D;
+    color: #fff;
+}
+.plain-btn {
+    background: #3D3C3D;
+    color: #fff;
+}
+.checkbox-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+    margin-top: 12px;
+}
+.result-label {
+    color: #fff;
+    font-weight: bold;
+    margin-top: 18px;
+    margin-bottom: 8px;
 }
 .tool-form {
     display: grid;
@@ -94,38 +207,27 @@ body {
     gap: 8px;
     max-width: 720px;
 }
-.tool-form label {
-    color: #fff;
-    font-weight: bold;
-    font-size: 0.95em;
-}
 .tool-form input,
 .tool-form select,
 .tool-form textarea,
-.tool-form button {
+.tool-form button,
+.field-control,
+.log-box,
+.report-box,
+.olt-notes {
     font-family: 'Ubuntu', Arial, sans-serif;
     font-size: 0.95em;
 }
 .tool-form input,
-.tool-form select {
+.tool-form select,
+.log-box,
+.report-box,
+.olt-notes {
     background: #fff;
     color: #000;
     border: none;
     border-radius: 4px;
     padding: 9px 10px;
-}
-.tool-form button {
-    background: #3D3C3D;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 12px 14px;
-    cursor: pointer;
-    font-weight: bold;
-    margin-top: 8px;
-}
-.tool-form button:hover {
-    background: #E95420;
 }
 .tool-form button:disabled,
 .tool-form input:disabled,
@@ -134,16 +236,84 @@ body {
     cursor: not-allowed;
 }
 .report-box {
-    width: 100%;
-    max-width: 720px;
+    max-width: 760px;
     min-height: 180px;
-    margin-top: 14px;
     background: #1A1A1A;
     color: #00FF00;
     border: 1px solid #3D3C3D;
     border-radius: 6px;
     padding: 10px;
-    box-sizing: border-box;
+    resize: vertical;
+}
+.hidden-file {
+    display: none;
+}
+.group-box {
+    max-width: 760px;
+    padding: 10px 0 10px 0;
+}
+.subnote {
+    color: #fff;
+    margin: 6px 0 4px 0;
+    font-size: 0.9em;
+}
+.log-header {
+    max-width: 760px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    color: #fff;
+    font-weight: bold;
+}
+.reset-btn {
+    background: #C70505;
+    color: #fff;
+}
+.log-box {
+    max-width: 760px;
+    min-height: 180px;
+    background: #252525;
+    color: #fff;
+    border: 1px solid #3D3C3D;
+    resize: vertical;
+}
+.download-row {
+    max-width: 760px;
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+.download-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    background: #2E7D32;
+    color: #fff;
+    min-height: 36px;
+    flex: 1;
+}
+.steps-box {
+    max-width: 720px;
+    margin-top: 14px;
+    background: #1f1f1f;
+    color: #fff;
+    border: 1px solid #3D3C3D;
+    border-radius: 8px;
+    padding: 14px 16px;
+}
+.steps-title {
+    color: #E95420;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+.steps-box ol,
+.steps-box ul {
+    margin: 0;
+    padding-left: 18px;
+    color: #eee;
+    line-height: 1.5;
 }
 .notice {
     margin-top: 12px;
@@ -190,6 +360,40 @@ td form button {
     padding: 6px 10px;
     cursor: pointer;
 }
+.olt-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.olt-modal-card {
+    width: min(520px, 92vw);
+    background: #111111;
+    border: 1px solid #3D3C3D;
+    border-radius: 10px;
+    padding: 18px;
+    box-shadow: 0 8px 20px #0008;
+}
+.olt-modal-title {
+    color: #E95420;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+.olt-notes {
+    min-height: 260px;
+    background: #F3F3F3;
+    color: #000;
+    resize: vertical;
+}
+.olt-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
 @media (max-width: 700px) {
     .launcher-root { flex-direction: column; }
     .sidebar { width: 100vw; min-width: 0; flex-direction: column; height: auto; }
@@ -198,4 +402,12 @@ td form button {
     .menu-btn { padding: 10px 10px; font-size: 1em; margin: 0 4px; }
     .main-area { padding: 16px 6px; }
     .welcome-label { font-size: 1em; padding: 16px 8px; margin-top: 16px; }
+    .tool-grid { grid-template-columns: 1fr; }
+    .field-label { margin-top: 6px; }
+    .action-row,
+    .download-row,
+    .olt-row,
+    .path-row,
+    .log-header,
+    .olt-modal-actions { flex-direction: column; align-items: stretch; }
 }
