@@ -2,7 +2,8 @@ import os
 import json
 import uuid
 import tempfile
-from flask import Flask, request, render_template, send_from_directory, send_file, redirect, url_for, session, flash
+import requests
+from flask import Flask, request, render_template, send_from_directory, send_file, redirect, url_for, session, flash, jsonify
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from contextlib import contextmanager
@@ -22,6 +23,8 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', str(uuid.uuid4()))
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['RESULT_FOLDER'] = RESULT_FOLDER
+app.config['SUPABASE_URL'] = (os.environ.get('SUPABASE_URL') or '').rstrip('/')
+app.config['SUPABASE_ANON_KEY'] = os.environ.get('SUPABASE_ANON_KEY', '')
 
 HPDB_RUNTIME = {}
 
@@ -32,6 +35,28 @@ if not IS_VERCEL:
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def supabase_ready():
+    return bool(app.config.get('SUPABASE_URL') and app.config.get('SUPABASE_ANON_KEY'))
+
+
+def supabase_headers():
+    return {
+        'apikey': app.config['SUPABASE_ANON_KEY'],
+        'Authorization': f"Bearer {app.config['SUPABASE_ANON_KEY']}",
+        'Content-Type': 'application/json'
+    }
+
+
+def supabase_auth_post(path, payload):
+    url = f"{app.config['SUPABASE_URL']}{path}"
+    resp = requests.post(url, headers=supabase_headers(), json=payload, timeout=20)
+    try:
+        data = resp.json()
+    except Exception:
+        data = {'message': resp.text}
+    return resp.status_code, data
 
 
 def make_job_dir(tool_name):
@@ -172,8 +197,78 @@ def base_context(active_menu='home', cable_report='', form_state=None):
         'boq_state': get_boq_session_state(),
         'line_names': cfg.get('line_names', []),
         'cable_types': cfg.get('cable_types', []),
-        'categories': cfg.get('cable_categories', [])
+        'categories': cfg.get('cable_categories', []),
+        'auth_user': session.get('auth_user', {}),
+        'supabase_ready': supabase_ready()
     }
+
+
+@app.route('/auth/signup', methods=['POST'])
+def auth_signup():
+    if not supabase_ready():
+        return jsonify({'ok': False, 'error': 'Supabase belum dikonfigurasi di server.'}), 500
+
+    payload = request.get_json(silent=True) or {}
+    email = (payload.get('email') or '').strip()
+    password = payload.get('password') or ''
+    full_name = (payload.get('full_name') or '').strip()
+
+    if not email or not password:
+        return jsonify({'ok': False, 'error': 'Email dan password wajib diisi.'}), 400
+
+    status, data = supabase_auth_post('/auth/v1/signup', {
+        'email': email,
+        'password': password,
+        'data': {'full_name': full_name}
+    })
+
+    if status >= 400:
+        return jsonify({'ok': False, 'error': data.get('msg') or data.get('error_description') or data.get('message') or 'Gagal registrasi.'}), status
+
+    return jsonify({
+        'ok': True,
+        'message': 'Registrasi berhasil. Cek email untuk verifikasi jika diminta.'
+    })
+
+
+@app.route('/auth/login', methods=['POST'])
+def auth_login():
+    if not supabase_ready():
+        return jsonify({'ok': False, 'error': 'Supabase belum dikonfigurasi di server.'}), 500
+
+    payload = request.get_json(silent=True) or {}
+    email = (payload.get('email') or '').strip()
+    password = payload.get('password') or ''
+
+    if not email or not password:
+        return jsonify({'ok': False, 'error': 'Email dan password wajib diisi.'}), 400
+
+    status, data = supabase_auth_post('/auth/v1/token?grant_type=password', {
+        'email': email,
+        'password': password
+    })
+
+    if status >= 400:
+        return jsonify({'ok': False, 'error': data.get('msg') or data.get('error_description') or data.get('message') or 'Login gagal.'}), status
+
+    user = data.get('user') or {}
+    session['auth_user'] = {
+        'id': user.get('id', ''),
+        'email': user.get('email', email),
+        'full_name': (user.get('user_metadata') or {}).get('full_name', '')
+    }
+    session['auth_access_token'] = data.get('access_token', '')
+    session.modified = True
+
+    return jsonify({'ok': True, 'user': session['auth_user']})
+
+
+@app.route('/auth/logout', methods=['POST'])
+def auth_logout():
+    session.pop('auth_user', None)
+    session.pop('auth_access_token', None)
+    session.modified = True
+    return jsonify({'ok': True})
 
 
 @app.route('/', methods=['GET'])

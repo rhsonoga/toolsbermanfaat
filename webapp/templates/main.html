@@ -23,6 +23,8 @@
             </div>
         </div>
 
+        <div class="auth-strip" id="authStrip">{% if auth_user and auth_user.get('email') %}Login sebagai {{ auth_user.get('email') }}{% else %}Belum login{% endif %}</div>
+
         <div class="browser-tabs">
             <button type="button" class="browser-tab active" data-browser-tab="kmz">KMZ CONVERTER</button>
             <button type="button" class="browser-tab" data-browser-tab="tools">TOOLS CENTER</button>
@@ -266,6 +268,7 @@
                     <button type="button" class="plain-btn" id="signupCloseBtn">Cancel</button>
                     <button type="submit" class="accent-btn">Sign Up</button>
                 </div>
+                <div class="auth-feedback" id="signupFeedback"></div>
             </form>
         </div>
     </div>
@@ -284,12 +287,14 @@
                     <button type="button" class="plain-btn" id="loginCloseBtn">Cancel</button>
                     <button type="submit" class="accent-btn">Login</button>
                 </div>
+                <div class="auth-feedback" id="loginFeedback"></div>
             </form>
         </div>
     </div>
 
     <script>
     const activeFromServer = "{{ active_menu or 'home' }}";
+    const supabaseReady = {{ 'true' if supabase_ready else 'false' }};
     const menuBtns = document.querySelectorAll('.menu-btn');
     const panels = document.querySelectorAll('.panel');
     const browserTabs = document.querySelectorAll('.browser-tab');
@@ -337,16 +342,77 @@
         if (e.target === loginModal) closeModal(loginModal);
     });
 
-    document.getElementById('signupForm').addEventListener('submit', (e) => {
+    function showFeedback(targetId, message, ok) {
+        const el = document.getElementById(targetId);
+        if (!el) return;
+        el.textContent = message;
+        el.classList.toggle('ok', !!ok);
+        el.classList.toggle('error', !ok);
+    }
+
+    function updateAuthStrip(email) {
+        const strip = document.getElementById('authStrip');
+        if (!strip) return;
+        strip.textContent = email ? `Login sebagai ${email}` : 'Belum login';
+    }
+
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        closeModal(signupModal);
-        alert('Registrasi berhasil disimulasikan.');
+        if (!supabaseReady) {
+            showFeedback('signupFeedback', 'Supabase belum dikonfigurasi di server.', false);
+            return;
+        }
+        const payload = {
+            full_name: document.getElementById('signupName').value,
+            email: document.getElementById('signupEmail').value,
+            password: document.getElementById('signupPassword').value
+        };
+        try {
+            const res = await fetch('/auth/signup', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) {
+                showFeedback('signupFeedback', data.error || 'Registrasi gagal.', false);
+                return;
+            }
+            showFeedback('signupFeedback', data.message || 'Registrasi berhasil.', true);
+        } catch (err) {
+            showFeedback('signupFeedback', `Error: ${err.message}`, false);
+        }
     });
 
-    document.getElementById('loginForm').addEventListener('submit', (e) => {
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        closeModal(loginModal);
-        alert('Login berhasil disimulasikan.');
+        if (!supabaseReady) {
+            showFeedback('loginFeedback', 'Supabase belum dikonfigurasi di server.', false);
+            return;
+        }
+        const payload = {
+            email: document.getElementById('loginEmail').value,
+            password: document.getElementById('loginPassword').value
+        };
+        try {
+            const res = await fetch('/auth/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) {
+                showFeedback('loginFeedback', data.error || 'Login gagal.', false);
+                return;
+            }
+            showFeedback('loginFeedback', 'Login berhasil.', true);
+            updateAuthStrip((data.user || {}).email || '');
+            setTimeout(() => {
+                closeModal(loginModal);
+            }, 350);
+        } catch (err) {
+            showFeedback('loginFeedback', `Error: ${err.message}`, false);
+        }
     });
 
     function setActive(panelName) {
