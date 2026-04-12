@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+venv_build/
+
+# VSCode
+.vscode/
+
+# Mac/Windows
+.DS_Store
+Thumbs.db
+
+# Output folders
+uploads/
+results/
+build/
+dist/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Log
+*.log
+
+# Env
+.env
+.env.*
+
+# Installer
+*.spec
+
+# Ignore Excel output
+*.xlsx
+!boq_converter/assets/*.xlsx
