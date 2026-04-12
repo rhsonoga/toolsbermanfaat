@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>FTTH CONVERTER TOOLS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/launcher.css">
+</head>
+<body>
+    <div class="launcher-root">
+        <div class="sidebar">
+            <div class="sidebar-title">CONVERTER V2.0</div>
+            <div class="sidebar-menu">
+                <div class="menu-btn" data-panel="home">Home</div>
+                <div class="menu-btn" data-panel="cable">Cable_Calculator</div>
+                <div class="menu-btn" data-panel="hpdb">HPDB_Converter</div>
+                <div class="menu-btn" data-panel="boq">BOQ_Converter</div>
+                <div class="menu-btn" data-panel="history">History</div>
+            </div>
+        </div>
+        <div class="main-area" id="main-area">
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="flash-wrap">
+                {% for message in messages %}
+                <div class="flash-item">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <div class="panel" data-name="home">
+                <div class="welcome-label">Hanya berusaha mempermudah pekerjaanmu... ^_^</div>
+            </div>
+
+            <div class="panel" data-name="cable">
+                <div class="panel-title">CABLE CALCULATOR</div>
+                <form method="post" action="{{ url_for('cable_calculate') }}" class="tool-form">
+                    <label>Line Name</label>
+                    <select name="line_name" required>
+                        {% for item in line_names %}<option value="{{ item }}">{{ item }}</option>{% endfor %}
+                    </select>
+
+                    <label>Cable Type</label>
+                    <select name="cable_type" required>
+                        {% for item in cable_types %}<option value="{{ item }}">{{ item }}</option>{% endfor %}
+                    </select>
+
+                    <label>Category</label>
+                    <select name="category" required>
+                        {% for item in categories %}<option value="{{ item }}">{{ item }}</option>{% endfor %}
+                    </select>
+
+                    <label>Total Route (M)</label>
+                    <input type="number" step="any" name="route" required>
+
+                    <label>Slack FDT</label>
+                    <input type="number" name="fdt" required>
+
+                    <label>Slack FAT/SF/MF</label>
+                    <input type="number" name="fat" required>
+
+                    <label>Toleransi (%)</label>
+                    <input type="number" step="any" name="tol" value="5.0" required>
+
+                    <label>OLT Code</label>
+                    <input type="text" name="olt">
+
+                    <label>FDT Code</label>
+                    <input type="text" name="code">
+
+                    <label>Segment</label>
+                    <input type="text" name="segment">
+
+                    <button type="submit">GENERATE REPORT</button>
+                </form>
+                <textarea class="report-box" readonly>{{ cable_report or '' }}</textarea>
+            </div>
+
+            <div class="panel" data-name="hpdb">
+                <div class="panel-title">HPDB INJECTOR SYSTEM</div>
+                <form method="post" action="{{ url_for('hpdb_process') }}" enctype="multipart/form-data" class="tool-form">
+                    <label>SOURCE KMZ</label>
+                    <input type="file" name="hpdb_file" accept=".kmz" {% if disable_upload %}disabled{% endif %} required>
+                    <button type="submit" {% if disable_upload %}disabled{% endif %}>STEP 1-3: PROCESS FINAL HPDB</button>
+                </form>
+                {% if disable_upload %}
+                <div class="notice">Mode serverless: file processing dinonaktifkan (filesystem read-only).</div>
+                {% endif %}
+            </div>
+
+            <div class="panel" data-name="boq">
+                <div class="panel-title">KMZ TO BOQ CONVERTER SYSTEM</div>
+                <form method="post" action="{{ url_for('boq_convert') }}" enctype="multipart/form-data" class="tool-form">
+                    <label>SOURCE KMZ</label>
+                    <input type="file" name="boq_file" accept=".kmz" {% if disable_upload %}disabled{% endif %} required>
+
+                    <label>Mode</label>
+                    <select name="boq_mode" {% if disable_upload %}disabled{% endif %}>
+                        <option value="CLUSTER">CLUSTER</option>
+                        <option value="FEEDER">FEEDER</option>
+                    </select>
+
+                    <button type="submit" {% if disable_upload %}disabled{% endif %}>PROSES BOQ</button>
+                </form>
+                {% if disable_upload %}
+                <div class="notice">Mode serverless: file processing dinonaktifkan (filesystem read-only).</div>
+                {% endif %}
+            </div>
+
+            <div class="panel" data-name="history">
+                <div class="panel-title">RIWAYAT PROSES</div>
+                {% if history %}
+                <div class="table-box">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tool</th>
+                                <th>Source</th>
+                                <th>Waktu</th>
+                                <th>Download</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in history %}
+                            <tr>
+                                <td>{{ item.tool }}</td>
+                                <td>{{ item.filename }}</td>
+                                <td>{{ item.time }}</td>
+                                <td><a href="{{ url_for('download', id=item.id) }}">Download</a></td>
+                                <td>
+                                    <form action="{{ url_for('delete', id=item.id) }}" method="post">
+                                        <button type="submit">Hapus</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="notice">Belum ada riwayat.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <script>
+    const activeFromServer = "{{ active_menu or 'home' }}";
+    const menuBtns = document.querySelectorAll('.menu-btn');
+    const panels = document.querySelectorAll('.panel');
+
+    function setActive(panelName) {
+        menuBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.panel === panelName));
+        panels.forEach(p => p.style.display = p.dataset.name === panelName ? 'block' : 'none');
+    }
+
+    menuBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            setActive(this.dataset.panel);
+        });
+    });
+
+    setActive(activeFromServer);
+    </script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Ubuntu', Arial, sans-serif;
+    background: #1a1a1a;
+}
+.launcher-root {
+    display: flex;
+    min-height: 100vh;
+    background: #1a1a1a;
+}
+.sidebar {
+    width: 240px;
+    background: #300A24;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    min-width: 240px;
+    box-shadow: 2px 0 8px #0002;
+}
+.sidebar-title {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #E95420;
+    padding: 32px 24px 20px 24px;
+    font-family: 'Ubuntu', Arial, sans-serif;
+    letter-spacing: 1px;
+}
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+}
+.menu-btn {
+    background: #3D3C3D;
+    color: #fff;
+    font-size: 1.1em;
+    font-family: 'Ubuntu', Arial, sans-serif;
+    font-weight: bold;
+    padding: 14px 24px;
+    border-radius: 8px;
+    margin: 0 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+    user-select: none;
+}
+.menu-btn.active, .menu-btn:hover {
+    background: #E95420;
+    color: #fff;
+}
+.main-area {
+    flex: 1;
+    background: #111111;
+    padding: 40px 32px;
+    min-width: 0;
+}
+.welcome-label {
+    color: #fff;
+    font-size: 1.3em;
+    font-family: 'Ubuntu', Arial, sans-serif;
+    font-weight: bold;
+    background: #222;
+    border-radius: 8px;
+    padding: 32px 24px;
+    margin-top: 40px;
+    box-shadow: 0 2px 8px #0002;
+}
+.flash-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.flash-item {
+    background: #2b2b2b;
+    border-left: 4px solid #E95420;
+    color: #fff;
+    padding: 10px 12px;
+    border-radius: 4px;
+}
+.panel {
+    display: none;
+}
+.panel-title {
+    color: #E95420;
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-bottom: 14px;
+}
+.tool-form {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    max-width: 720px;
+}
+.tool-form label {
+    color: #fff;
+    font-weight: bold;
+    font-size: 0.95em;
+}
+.tool-form input,
+.tool-form select,
+.tool-form textarea,
+.tool-form button {
+    font-family: 'Ubuntu', Arial, sans-serif;
+    font-size: 0.95em;
+}
+.tool-form input,
+.tool-form select {
+    background: #fff;
+    color: #000;
+    border: none;
+    border-radius: 4px;
+    padding: 9px 10px;
+}
+.tool-form button {
+    background: #3D3C3D;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 14px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 8px;
+}
+.tool-form button:hover {
+    background: #E95420;
+}
+.tool-form button:disabled,
+.tool-form input:disabled,
+.tool-form select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+.report-box {
+    width: 100%;
+    max-width: 720px;
+    min-height: 180px;
+    margin-top: 14px;
+    background: #1A1A1A;
+    color: #00FF00;
+    border: 1px solid #3D3C3D;
+    border-radius: 6px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+.notice {
+    margin-top: 12px;
+    background: #2b2b2b;
+    color: #fff;
+    border-left: 4px solid #E95420;
+    padding: 10px 12px;
+    border-radius: 4px;
+    max-width: 720px;
+}
+.table-box {
+    max-width: 100%;
+    overflow: auto;
+    background: #1a1a1a;
+    border-radius: 6px;
+    border: 1px solid #3D3C3D;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #fff;
+}
+th, td {
+    border: 1px solid #3D3C3D;
+    padding: 10px;
+    text-align: left;
+}
+th {
+    color: #E95420;
+    background: #222;
+}
+td a {
+    color: #fff;
+    text-decoration: underline;
+}
+td form {
+    margin: 0;
+}
+td form button {
+    background: #C70505;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+@media (max-width: 700px) {
+    .launcher-root { flex-direction: column; }
+    .sidebar { width: 100vw; min-width: 0; flex-direction: column; height: auto; }
+    .sidebar-title { padding: 18px 12px; font-size: 1em; }
+    .sidebar-menu { flex-direction: row; gap: 6px; margin-top: 0; }
+    .menu-btn { padding: 10px 10px; font-size: 1em; margin: 0 4px; }
+    .main-area { padding: 16px 6px; }
+    .welcome-label { font-size: 1em; padding: 16px 8px; margin-top: 16px; }
+}
