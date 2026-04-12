@@ -7,8 +7,29 @@
     <link rel="stylesheet" href="/static/launcher.css">
 </head>
 <body>
-    <div class="launcher-host">
-    <div class="launcher-root">
+    <div class="browser-shell">
+        <div class="browser-topbar">
+            <div class="window-dots" aria-hidden="true">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-yellow"></span>
+                <span class="dot dot-green"></span>
+            </div>
+            <div class="top-actions">
+                <button type="button" class="top-btn">Sign Up</button>
+                <button type="button" class="top-btn">Login</button>
+                <button type="button" class="top-btn">Setting</button>
+            </div>
+        </div>
+
+        <div class="browser-tabs">
+            <button type="button" class="browser-tab active" data-browser-tab="kmz">KMZ CONVERTER</button>
+            <button type="button" class="browser-tab" data-browser-tab="tools">TOOLS CENTER</button>
+            <button type="button" class="browser-tab" data-browser-tab="history">HISTORY</button>
+        </div>
+
+        <div class="browser-page active" data-browser-page="kmz">
+            <div class="launcher-host">
+            <div class="launcher-root">
         <div class="sidebar-wrap">
         <div class="sidebar">
             <div class="sidebar-title">CONVERTER V2.0</div>
@@ -196,6 +217,23 @@
         </div>
         </div>
     </div>
+            </div>
+        </div>
+
+        <div class="browser-page" data-browser-page="tools">
+            <div class="placeholder-page">
+                <h2>TOOLS CENTER</h2>
+                <p>Tab ini siap dipakai untuk fitur tambahan berikutnya.</p>
+            </div>
+        </div>
+
+        <div class="browser-page" data-browser-page="history">
+            <div class="placeholder-page">
+                <h2>HISTORY</h2>
+                <p>Tab ini disiapkan untuk histori proses converter.</p>
+            </div>
+        </div>
+    </div>
     </div>
 
     <div class="olt-modal" id="oltModal" aria-hidden="true">
@@ -213,6 +251,21 @@
     const activeFromServer = "{{ active_menu or 'home' }}";
     const menuBtns = document.querySelectorAll('.menu-btn');
     const panels = document.querySelectorAll('.panel');
+    const browserTabs = document.querySelectorAll('.browser-tab');
+    const browserPages = document.querySelectorAll('.browser-page');
+
+    function setBrowserTab(tabName) {
+        browserTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.browserTab === tabName));
+        browserPages.forEach(page => page.classList.toggle('active', page.dataset.browserPage === tabName));
+    }
+
+    browserTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            setBrowserTab(this.dataset.browserTab);
+        });
+    });
+
+    setBrowserTab('kmz');
 
     function setActive(panelName) {
         menuBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.panel === panelName));
