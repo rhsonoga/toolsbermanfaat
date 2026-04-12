@@ -15,9 +15,11 @@
                 <span class="dot dot-green"></span>
             </div>
             <div class="top-actions">
-                <button type="button" class="top-btn">Sign Up</button>
-                <button type="button" class="top-btn">Login</button>
-                <button type="button" class="top-btn">Setting</button>
+                <button type="button" class="top-btn" id="openSignupBtn">Sign Up</button>
+                <button type="button" class="top-btn" id="openLoginBtn">Login</button>
+                <button type="button" class="top-btn top-btn-gear" id="openSettingBtn" aria-label="Setting" title="Setting">
+                    <span class="gear-icon" aria-hidden="true">&#9881;</span>
+                </button>
             </div>
         </div>
 
@@ -247,6 +249,45 @@
         </div>
     </div>
 
+    <div class="auth-modal" id="signupModal" aria-hidden="true">
+        <div class="auth-card">
+            <div class="auth-title">Create Account</div>
+            <form id="signupForm" class="auth-form">
+                <label for="signupName">Full Name</label>
+                <input id="signupName" name="full_name" type="text" required>
+
+                <label for="signupEmail">Email</label>
+                <input id="signupEmail" name="email" type="email" required>
+
+                <label for="signupPassword">Password</label>
+                <input id="signupPassword" name="password" type="password" minlength="8" required>
+
+                <div class="auth-actions">
+                    <button type="button" class="plain-btn" id="signupCloseBtn">Cancel</button>
+                    <button type="submit" class="accent-btn">Sign Up</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="auth-modal" id="loginModal" aria-hidden="true">
+        <div class="auth-card">
+            <div class="auth-title">Welcome Back</div>
+            <form id="loginForm" class="auth-form">
+                <label for="loginEmail">Email</label>
+                <input id="loginEmail" name="email" type="email" required>
+
+                <label for="loginPassword">Password</label>
+                <input id="loginPassword" name="password" type="password" required>
+
+                <div class="auth-actions">
+                    <button type="button" class="plain-btn" id="loginCloseBtn">Cancel</button>
+                    <button type="submit" class="accent-btn">Login</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
     const activeFromServer = "{{ active_menu or 'home' }}";
     const menuBtns = document.querySelectorAll('.menu-btn');
@@ -266,6 +307,47 @@
     });
 
     setBrowserTab('kmz');
+
+    const signupModal = document.getElementById('signupModal');
+    const loginModal = document.getElementById('loginModal');
+
+    function openModal(modal) {
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeModal(modal) {
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    document.getElementById('openSignupBtn').addEventListener('click', () => openModal(signupModal));
+    document.getElementById('openLoginBtn').addEventListener('click', () => openModal(loginModal));
+    document.getElementById('openSettingBtn').addEventListener('click', () => {
+        alert('Halaman setting akan segera tersedia.');
+    });
+
+    document.getElementById('signupCloseBtn').addEventListener('click', () => closeModal(signupModal));
+    document.getElementById('loginCloseBtn').addEventListener('click', () => closeModal(loginModal));
+
+    signupModal.addEventListener('click', (e) => {
+        if (e.target === signupModal) closeModal(signupModal);
+    });
+    loginModal.addEventListener('click', (e) => {
+        if (e.target === loginModal) closeModal(loginModal);
+    });
+
+    document.getElementById('signupForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        closeModal(signupModal);
+        alert('Registrasi berhasil disimulasikan.');
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        closeModal(loginModal);
+        alert('Login berhasil disimulasikan.');
+    });
 
     function setActive(panelName) {
         menuBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.panel === panelName));

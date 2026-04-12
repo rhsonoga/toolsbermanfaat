@@ -52,6 +52,18 @@ body {
 .top-btn:hover {
     background: #3a414b;
 }
+.top-btn-gear {
+    width: 36px;
+    min-width: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.gear-icon {
+    font-size: 18px;
+    line-height: 1;
+}
 .browser-tabs {
     display: flex;
     align-items: stretch;
@@ -91,6 +103,57 @@ body {
 .placeholder-page h2 {
     color: #E95420;
     margin-top: 0;
+}
+.auth-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+    align-items: center;
+    justify-content: center;
+    z-index: 1200;
+}
+.auth-card {
+    width: min(420px, 92vw);
+    background: #15191d;
+    border: 1px solid #3d434b;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 14px 28px #0009;
+}
+.auth-title {
+    color: #E95420;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 14px;
+}
+.auth-form {
+    display: grid;
+    gap: 8px;
+}
+.auth-form label {
+    color: #f0f2f4;
+    font-size: 11px;
+    font-weight: 700;
+}
+.auth-form input {
+    border: 1px solid #4a515a;
+    background: #20262d;
+    color: #fff;
+    border-radius: 8px;
+    padding: 9px 10px;
+    font-family: 'Ubuntu', Arial, sans-serif;
+    font-size: 12px;
+}
+.auth-form input:focus {
+    outline: none;
+    border-color: #E95420;
+}
+.auth-actions {
+    margin-top: 8px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
 }
 .launcher-host {
     min-height: 100vh;
