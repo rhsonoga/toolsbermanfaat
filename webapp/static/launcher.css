@@ -490,6 +490,10 @@ body {
     min-height: 36px;
     flex: 1;
 }
+.action-stack {
+    display: flex;
+    gap: 12px;
+}
 .steps-box {
     max-width: 720px;
     margin-top: 14px;
