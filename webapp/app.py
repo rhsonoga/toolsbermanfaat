@@ -273,7 +273,8 @@ def auth_logout():
 
 @app.route('/', methods=['GET'])
 def main_launcher():
-    return render_template('main.html', **base_context())
+    menu = request.args.get('menu', 'home')
+    return render_template('main.html', **base_context(active_menu=menu))
 
 
 @app.route('/cable/calculate', methods=['POST'])
@@ -374,7 +375,7 @@ def boq_reset():
         session.pop(key, None)
     session.modified = True
     flash('System Ready. Pilih file KMZ.')
-    return redirect(url_for('main_launcher'))
+    return redirect(url_for('main_launcher', menu='boq'))
 
 
 def _hpdb_save_upload(file_storage):
@@ -464,7 +465,7 @@ def hpdb_reset():
     HPDB_RUNTIME.pop(runtime_id, None)
     session.modified = True
     flash('Session HPDB di-reset.')
-    return redirect(url_for('main_launcher'))
+    return redirect(url_for('main_launcher', menu='hpdb'))
 
 
 @app.route('/hpdb/download/step1')
