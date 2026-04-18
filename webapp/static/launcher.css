@@ -492,6 +492,7 @@ body {
 }
 .action-stack {
     display: flex;
+    flex-direction: column;
     gap: 12px;
 }
 .steps-box {
