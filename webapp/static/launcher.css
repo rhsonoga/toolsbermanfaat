@@ -211,7 +211,7 @@ body {
     box-sizing: border-box;
 }
 .sidebar-title {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: bold;
     color: #E95420;
     padding: 20px 15px;
@@ -250,7 +250,7 @@ body {
 }
 .welcome-label {
     color: #fff;
-    font-size: 1.3em;
+    font-size: 14px;
     font-family: 'Ubuntu', Arial, sans-serif;
     font-weight: bold;
     background: #222;
@@ -300,7 +300,7 @@ body {
 .field-label,
 .group-label {
     color: #fff;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: bold;
 }
 .field-control,
@@ -310,7 +310,7 @@ body {
     width: 100%;
     box-sizing: border-box;
     font-family: 'Ubuntu', Arial, sans-serif;
-    font-size: 10px;
+    font-size: 12px;
     border: none;
     border-radius: 4px;
 }
@@ -340,7 +340,7 @@ body {
     cursor: pointer;
     font-family: 'Ubuntu', Arial, sans-serif;
     font-weight: bold;
-    font-size: 10px;
+    font-size: 12px;
     transition: background 0.2s;
 }
 .mini-btn {
@@ -392,7 +392,7 @@ body {
 .result-label {
     color: #fff;
     font-weight: bold;
-    font-size: 10px;
+    font-size: 12px;
     margin-top: 18px;
     margin-bottom: 8px;
 }
@@ -411,7 +411,7 @@ body {
 .report-box,
 .olt-notes {
     font-family: 'Ubuntu', Arial, sans-serif;
-    font-size: 10px;
+    font-size: 12px;
 }
 .tool-form input,
 .tool-form select,
@@ -460,7 +460,7 @@ body {
     margin-top: 10px;
     color: #fff;
     font-weight: bold;
-    font-size: 10px;
+    font-size: 12px;
 }
 .reset-btn {
     background: #C70505;
@@ -600,11 +600,11 @@ td form button {
     .sidebar-wrap { padding: 5px; }
     .main-wrap { padding: 2px 5px 5px 5px; }
     .sidebar { width: 100%; min-width: 0; flex-direction: column; height: auto; }
-    .sidebar-title { padding: 18px 12px; font-size: 1em; }
+    .sidebar-title { padding: 18px 12px; font-size: 14px; }
     .sidebar-menu { flex-direction: row; gap: 6px; margin-top: 0; }
-    .menu-btn { padding: 10px 10px; font-size: 1em; margin: 0 4px; }
+    .menu-btn { padding: 10px 10px; font-size: 12px; margin: 0 4px; }
     .main-area { padding: 16px 6px; }
-    .welcome-label { font-size: 1em; padding: 16px 8px; margin-top: 16px; }
+    .welcome-label { font-size: 14px; padding: 16px 8px; margin-top: 16px; }
     .tool-grid { grid-template-columns: 1fr; }
     .field-label { margin-top: 6px; }
     .action-row,
