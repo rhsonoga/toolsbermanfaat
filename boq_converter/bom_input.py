@@ -34,6 +34,38 @@ def find_row_by_logic(ws, material_search, line_letter=None):
                 return row
     return None
 
+
+def build_pole_search_terms(material_name):
+    """Bangun kandidat term pencarian pole agar tahan beda format penamaan."""
+    m_name = str(material_name).upper().strip()
+
+    if m_name == "EXISTING POLE":
+        return ["EXISTING POLE EMR", "EXISTING POLE MR", "EXISTING POLE"]
+
+    base = m_name.replace("NEW POLE", "", 1).strip()
+    normalized = base.replace("-", " ")
+
+    alias_map = {
+        "7 2.5": "7M 2.5",
+        "7 3": "7M 3",
+        "7 4": "7M 4",
+        "9 4": "9M 4"
+    }
+
+    candidates = [base, normalized]
+    if normalized in alias_map:
+        candidates.append(alias_map[normalized])
+
+    # Dedup sambil menjaga urutan
+    seen = set()
+    result = []
+    for item in candidates:
+        key = item.strip().upper()
+        if key and key not in seen:
+            seen.add(key)
+            result.append(key)
+    return result
+
 def run_injection(template_path, source_excel, output_path, mode="CLUSTER"):
     """
     Mesin Injeksi BOQ.
@@ -114,11 +146,11 @@ def run_injection(template_path, source_excel, output_path, mode="CLUSTER"):
         for _, p_row in df_boq.iterrows():
             m_name = str(p_row['MATERIAL']).upper()
             if "POLE" in m_name:
-                pole_type = "EXISTING POLE EMR" if m_name == "EXISTING POLE" else m_name.replace("NEW POLE ", "").strip()
+                pole_terms = build_pole_search_terms(m_name)
                 
                 for r in range(49, 60):
                     cell_b = str(ws.cell(row=r, column=2).value or "").upper()
-                    if pole_type in cell_b:
+                    if any(term in cell_b for term in pole_terms):
                         curr = ws.cell(row=r, column=3).value or 0
                         ws.cell(row=r, column=3).value = curr + int(p_row['QTY'])
                         break
@@ -159,16 +191,21 @@ def run_injection(template_path, source_excel, output_path, mode="CLUSTER"):
                 r_fat_line = find_row_by_logic(ws, f"FAT - Line {line_let}")
                 if r_fat_line: ws.cell(row=r_fat_line, column=col_main).value = int(qty)
             elif "NEW POLE" in material:
-                search_term = material.replace("NEW POLE ", "").replace("-", " ")
-                if "7 2.5" in search_term: search_term = "7m 2.5"
-                elif "7 3" in search_term: search_term = "7m 3"
-                elif "7 4" in search_term: search_term = "7m 4"
-                r = find_row_by_logic(ws, search_term)
+                pole_terms = build_pole_search_terms(material)
+                r = None
+                for search_term in pole_terms:
+                    r = find_row_by_logic(ws, search_term)
+                    if r:
+                        break
                 if r:
                     curr = ws.cell(row=r, column=col_main).value or 0
                     ws.cell(row=r, column=col_main).value = curr + int(qty)
             elif "EXISTING POLE" in material:
-                r = find_row_by_logic(ws, "Existing Pole MR")
+                r = None
+                for search_term in build_pole_search_terms(material):
+                    r = find_row_by_logic(ws, search_term)
+                    if r:
+                        break
                 if r:
                     curr = ws.cell(row=r, column=col_main).value or 0
                     ws.cell(row=r, column=col_main).value = curr + int(qty)
