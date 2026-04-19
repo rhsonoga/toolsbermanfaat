@@ -498,3 +498,20 @@ window.closeModal = closeModal;
 window.initAuthModule = initAuthModule;
 window.setupModalBackdrops = setupModalBackdrops;
 window.setupTopActionButtons = setupTopActionButtons;
+
+// ============================================================
+// AUTO-INITIALIZATION
+// ============================================================
+
+// Auto-initialize auth module when DOM is ready
+if (document.readyState === 'loading') {
+    // DOM is still loading
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('[Auth Module] DOM loaded, initializing...');
+        initAuthModule();
+    });
+} else {
+    // DOM is already loaded (script loaded after DOMContentLoaded)
+    console.log('[Auth Module] DOM already loaded, initializing...');
+    initAuthModule();
+}
