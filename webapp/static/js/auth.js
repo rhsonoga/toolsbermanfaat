@@ -60,130 +60,49 @@ function setupModalCloseButtons() {
 // ============================================================
 
 /**
- * Initialize signup form event listeners (form submission only).
- * Close button is handled separately in setupModalCloseButtons().
+ * Compatibility wrapper: delegate signup initialization to modular auth file.
  */
 function initSignupForm() {
-    const signupForm = document.getElementById('signupForm');
-    if (!signupForm) return;
-    
-    signupForm.addEventListener('submit', handleSignupSubmit);
+    if (window.AuthSignupLogin && typeof window.AuthSignupLogin.initSignupForm === 'function') {
+        window.AuthSignupLogin.initSignupForm();
+        return;
+    }
+
+    console.warn('Auth Module: Signup/Login module not loaded (initSignupForm)');
 }
 
 /**
- * Handle signup form submission.
+ * Compatibility wrapper for external callers.
  */
 async function handleSignupSubmit(e) {
-    e.preventDefault();
-    
-    const fullName = document.getElementById('signupName');
-    const email = document.getElementById('signupEmail');
-    const password = document.getElementById('signupPassword');
-    
-    if (!fullName?.value || !email?.value || !password?.value) {
-        showFeedback('signupFeedback', 'Semua field wajib diisi.', false);
-        return;
+    if (window.AuthSignupLogin && typeof window.AuthSignupLogin.handleSignupSubmit === 'function') {
+        return window.AuthSignupLogin.handleSignupSubmit(e);
     }
-    
-    const payload = {
-        full_name: fullName.value,
-        email: email.value,
-        password: password.value
-    };
-    
-    try {
-        showFeedback('signupFeedback', 'Sedang memproses...', true);
-        
-        const res = await fetch('/auth/signup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        
-        const data = await res.json();
-        
-        if (!res.ok || !data.ok) {
-            showFeedback('signupFeedback', data.error || 'Registrasi gagal.', false);
-            return;
-        }
-        
-        // Success
-        showFeedback('signupFeedback', data.message || 'Registrasi berhasil. Cek email Anda!', true);
-        
-        // Clear form
-        if (e.target && typeof e.target.reset === 'function') {
-            e.target.reset();
-        }
-        
-        // Close modal after 2 seconds
-        setTimeout(() => {
-            closeModal('signupModal');
-        }, 2000);
-        
-    } catch (err) {
-        showFeedback('signupFeedback', `Error: ${err.message}`, false);
-    }
+
+    console.warn('Auth Module: Signup/Login module not loaded (handleSignupSubmit)');
 }
 
 /**
- * Initialize login form event listeners (form submission only).
- * Close button is handled separately in setupModalCloseButtons().
+ * Compatibility wrapper: delegate login initialization to modular auth file.
  */
 function initLoginForm() {
-    const loginForm = document.getElementById('loginForm');
-    if (!loginForm) return;
-    
-    loginForm.addEventListener('submit', handleLoginSubmit);
+    if (window.AuthSignupLogin && typeof window.AuthSignupLogin.initLoginForm === 'function') {
+        window.AuthSignupLogin.initLoginForm();
+        return;
+    }
+
+    console.warn('Auth Module: Signup/Login module not loaded (initLoginForm)');
 }
 
 /**
- * Handle login form submission.
+ * Compatibility wrapper for external callers.
  */
 async function handleLoginSubmit(e) {
-    e.preventDefault();
-    
-    const email = document.getElementById('loginEmail');
-    const password = document.getElementById('loginPassword');
-    
-    if (!email?.value || !password?.value) {
-        showFeedback('loginFeedback', 'Email dan password wajib diisi.', false);
-        return;
+    if (window.AuthSignupLogin && typeof window.AuthSignupLogin.handleLoginSubmit === 'function') {
+        return window.AuthSignupLogin.handleLoginSubmit(e);
     }
-    
-    const payload = {
-        email: email.value,
-        password: password.value
-    };
-    
-    try {
-        showFeedback('loginFeedback', 'Sedang login...', true);
-        
-        const res = await fetch('/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        
-        const data = await res.json();
-        
-        if (!res.ok || !data.ok) {
-            showFeedback('loginFeedback', data.error || 'Login gagal.', false);
-            return;
-        }
-        
-        // Success
-        showFeedback('loginFeedback', data.message || 'Login berhasil!', true);
-        updateAuthStrip(data.user?.email || '');
-        updateLoginLogoutUI();
-        
-        // Close modal after 1.5 seconds
-        setTimeout(() => {
-            closeModal('loginModal');
-        }, 1500);
-        
-    } catch (err) {
-        showFeedback('loginFeedback', `Error: ${err.message}`, false);
-    }
+
+    console.warn('Auth Module: Signup/Login module not loaded (handleLoginSubmit)');
 }
 
 // ============================================================
