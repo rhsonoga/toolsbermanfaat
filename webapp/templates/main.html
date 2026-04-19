@@ -2,9 +2,10 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Converter</title>
+    <title>TOOLS</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="/static/launcher.css">
+    <script src="/static/js/auth.js" defer></script>
 </head>
 <body>
     <div class="browser-shell">
@@ -17,6 +18,7 @@
             <div class="top-actions">
                 <button type="button" class="top-btn" id="openSignupBtn">Sign Up</button>
                 <button type="button" class="top-btn" id="openLoginBtn">Login</button>
+                <button type="button" class="top-btn" id="logoutBtn" style="display: none;">Logout</button>
                 <button type="button" class="top-btn top-btn-gear" id="openSettingBtn" aria-label="Setting" title="Setting">
                     <span class="gear-icon" aria-hidden="true">&#9881;</span>
                 </button>
@@ -58,6 +60,7 @@
             {% endwith %}
 
             <div class="panel panel-home" data-panel="home">
+                <div id="verificationBanner" class="verification-banner" style="display: none;"></div>
                 <div class="welcome-label">Hanya berusaha mempermudah pekerjaanmu... ^_^</div>
             </div>
 
@@ -313,107 +316,8 @@
 
     setBrowserTab('kmz');
 
-    const signupModal = document.getElementById('signupModal');
-    const loginModal = document.getElementById('loginModal');
-
-    function openModal(modal) {
-        modal.style.display = 'flex';
-        modal.setAttribute('aria-hidden', 'false');
-    }
-
-    function closeModal(modal) {
-        modal.style.display = 'none';
-        modal.setAttribute('aria-hidden', 'true');
-    }
-
-    document.getElementById('openSignupBtn').addEventListener('click', () => openModal(signupModal));
-    document.getElementById('openLoginBtn').addEventListener('click', () => openModal(loginModal));
-    document.getElementById('openSettingBtn').addEventListener('click', () => {
-        alert('Halaman setting akan segera tersedia.');
-    });
-
-    document.getElementById('signupCloseBtn').addEventListener('click', () => closeModal(signupModal));
-    document.getElementById('loginCloseBtn').addEventListener('click', () => closeModal(loginModal));
-
-    signupModal.addEventListener('click', (e) => {
-        if (e.target === signupModal) closeModal(signupModal);
-    });
-    loginModal.addEventListener('click', (e) => {
-        if (e.target === loginModal) closeModal(loginModal);
-    });
-
-    function showFeedback(targetId, message, ok) {
-        const el = document.getElementById(targetId);
-        if (!el) return;
-        el.textContent = message;
-        el.classList.toggle('ok', !!ok);
-        el.classList.toggle('error', !ok);
-    }
-
-    function updateAuthStrip(email) {
-        const strip = document.getElementById('authStrip');
-        if (!strip) return;
-        strip.textContent = email ? `Login sebagai ${email}` : 'Belum login';
-    }
-
-    document.getElementById('signupForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (!supabaseReady) {
-            showFeedback('signupFeedback', 'Supabase belum dikonfigurasi di server.', false);
-            return;
-        }
-        const payload = {
-            full_name: document.getElementById('signupName').value,
-            email: document.getElementById('signupEmail').value,
-            password: document.getElementById('signupPassword').value
-        };
-        try {
-            const res = await fetch('/auth/signup', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
-            const data = await res.json();
-            if (!res.ok || !data.ok) {
-                showFeedback('signupFeedback', data.error || 'Registrasi gagal.', false);
-                return;
-            }
-            showFeedback('signupFeedback', data.message || 'Registrasi berhasil.', true);
-        } catch (err) {
-            showFeedback('signupFeedback', `Error: ${err.message}`, false);
-        }
-    });
-
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (!supabaseReady) {
-            showFeedback('loginFeedback', 'Supabase belum dikonfigurasi di server.', false);
-            return;
-        }
-        const payload = {
-            email: document.getElementById('loginEmail').value,
-            password: document.getElementById('loginPassword').value
-        };
-        try {
-            const res = await fetch('/auth/login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
-            const data = await res.json();
-            if (!res.ok || !data.ok) {
-                showFeedback('loginFeedback', data.error || 'Login gagal.', false);
-                return;
-            }
-            showFeedback('loginFeedback', 'Login berhasil.', true);
-            updateAuthStrip((data.user || {}).email || '');
-            setTimeout(() => {
-                closeModal(loginModal);
-            }, 350);
-        } catch (err) {
-            showFeedback('loginFeedback', `Error: ${err.message}`, false);
-        }
-    });
+    // OLD INLINE AUTH HANDLERS - NOW HANDLED BY auth.js MODULE
+    // Keep local references for compatibility but don't add event listeners here
 
     function setActive(panelName) {
         menuBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.panel === panelName));
@@ -573,6 +477,13 @@
     updateCableUIState();
     syncCableHidden();
     validateCable();
+    
+    // Initialize authentication module (email verification, login, logout)
+    if (typeof initAuthModule === 'function') {
+        initAuthModule();
+        setupModalBackdrops();
+        setupTopActionButtons();
+    }
     </script>
 </body>
 </html>

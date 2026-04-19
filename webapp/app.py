@@ -12,6 +12,14 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from boq_converter.main import convert
 from hpdb_converter.session_engine import SessionEngine
+from webapp.auth import (
+    require_verified_email,
+    signup_handler,
+    login_handler,
+    verify_email_handler,
+    resend_verification_handler,
+    logout_handler,
+)
 
 IS_VERCEL = os.environ.get('VERCEL', False) or os.environ.get('VERCEL_ENV', False)
 BASE_DIR = os.path.dirname(__file__)
@@ -213,22 +221,15 @@ def auth_signup():
     password = payload.get('password') or ''
     full_name = (payload.get('full_name') or '').strip()
 
-    if not email or not password:
-        return jsonify({'ok': False, 'error': 'Email dan password wajib diisi.'}), 400
+    status, response = signup_handler(
+        email=email,
+        password=password,
+        full_name=full_name,
+        supabase_url=app.config['SUPABASE_URL'],
+        supabase_key=app.config['SUPABASE_ANON_KEY']
+    )
 
-    status, data = supabase_auth_post('/auth/v1/signup', {
-        'email': email,
-        'password': password,
-        'data': {'full_name': full_name}
-    })
-
-    if status >= 400:
-        return jsonify({'ok': False, 'error': data.get('msg') or data.get('error_description') or data.get('message') or 'Gagal registrasi.'}), status
-
-    return jsonify({
-        'ok': True,
-        'message': 'Registrasi berhasil. Cek email untuk verifikasi jika diminta.'
-    })
+    return jsonify(response), status
 
 
 @app.route('/auth/login', methods=['POST'])
@@ -240,35 +241,63 @@ def auth_login():
     email = (payload.get('email') or '').strip()
     password = payload.get('password') or ''
 
-    if not email or not password:
-        return jsonify({'ok': False, 'error': 'Email dan password wajib diisi.'}), 400
+    status, response = login_handler(
+        email=email,
+        password=password,
+        supabase_url=app.config['SUPABASE_URL'],
+        supabase_key=app.config['SUPABASE_ANON_KEY']
+    )
 
-    status, data = supabase_auth_post('/auth/v1/token?grant_type=password', {
-        'email': email,
-        'password': password
-    })
+    return jsonify(response), status
 
+
+@app.route('/auth/verify', methods=['GET'])
+def auth_verify():
+    """Handle email verification link from email."""
+    if not supabase_ready():
+        return redirect(url_for('main_launcher') + '?verification_error=server_error')
+    
+    token = request.args.get('token', '').strip()
+    
+    if not token:
+        return redirect(url_for('main_launcher') + '?verification_error=no_token')
+    
+    status, response = verify_email_handler(
+        token=token,
+        supabase_url=app.config['SUPABASE_URL'],
+        supabase_key=app.config['SUPABASE_ANON_KEY']
+    )
+    
     if status >= 400:
-        return jsonify({'ok': False, 'error': data.get('msg') or data.get('error_description') or data.get('message') or 'Login gagal.'}), status
+        error_code = 'token_expired' if 'expired' in response.get('error', '').lower() else 'token_invalid'
+        return redirect(url_for('main_launcher', menu='home') + f'?verified=false&error={error_code}')
+    
+    # Success - redirect to home with success message
+    return redirect(url_for('main_launcher', menu='home') + '?verified=true')
 
-    user = data.get('user') or {}
-    session['auth_user'] = {
-        'id': user.get('id', ''),
-        'email': user.get('email', email),
-        'full_name': (user.get('user_metadata') or {}).get('full_name', '')
-    }
-    session['auth_access_token'] = data.get('access_token', '')
-    session.modified = True
 
-    return jsonify({'ok': True, 'user': session['auth_user']})
+@app.route('/auth/resend-verification', methods=['POST'])
+def auth_resend_verification():
+    """Handle resending verification email."""
+    if not supabase_ready():
+        return jsonify({'ok': False, 'error': 'Supabase belum dikonfigurasi di server.'}), 500
+    
+    payload = request.get_json(silent=True) or {}
+    email = (payload.get('email') or '').strip()
+    
+    status, response = resend_verification_handler(
+        email=email,
+        supabase_url=app.config['SUPABASE_URL'],
+        supabase_key=app.config['SUPABASE_ANON_KEY']
+    )
+    
+    return jsonify(response), status
 
 
 @app.route('/auth/logout', methods=['POST'])
 def auth_logout():
-    session.pop('auth_user', None)
-    session.pop('auth_access_token', None)
-    session.modified = True
-    return jsonify({'ok': True})
+    status, response = logout_handler()
+    return jsonify(response), status
 
 
 @app.route('/', methods=['GET'])
@@ -278,6 +307,7 @@ def main_launcher():
 
 
 @app.route('/cable/calculate', methods=['POST'])
+@require_verified_email
 def cable_calculate():
     try:
         form_state = request.form.to_dict(flat=True)
@@ -290,6 +320,7 @@ def cable_calculate():
 
 
 @app.route('/boq/convert', methods=['POST'])
+@require_verified_email
 def boq_convert():
     action = (request.form.get('boq_action') or '').upper()
     if action == 'RESET':
@@ -352,6 +383,7 @@ def boq_convert():
 
 
 @app.route('/boq/download/mid')
+@require_verified_email
 def boq_download_mid():
     path = session.get('boq_mid_file', '')
     if not path or not os.path.exists(path):
@@ -361,6 +393,7 @@ def boq_download_mid():
 
 
 @app.route('/boq/download/final')
+@require_verified_email
 def boq_download_final():
     path = session.get('boq_final_file', '')
     if not path or not os.path.exists(path):
@@ -370,6 +403,7 @@ def boq_download_final():
 
 
 @app.route('/boq/reset', methods=['POST'])
+@require_verified_email
 def boq_reset():
     for key in ['boq_mid_file', 'boq_final_file', 'boq_log', 'boq_mode_last', 'boq_source_display']:
         session.pop(key, None)
@@ -393,6 +427,7 @@ def _hpdb_save_upload(file_storage):
 
 
 @app.route('/hpdb/process', methods=['POST'])
+@require_verified_email
 def hpdb_process():
     action = (request.form.get('hpdb_action') or 'step1').lower()
     runtime = get_hpdb_runtime()
@@ -460,6 +495,7 @@ def hpdb_process():
 
 
 @app.route('/hpdb/reset', methods=['POST'])
+@require_verified_email
 def hpdb_reset():
     runtime_id = get_runtime_id()
     HPDB_RUNTIME.pop(runtime_id, None)
@@ -469,6 +505,7 @@ def hpdb_reset():
 
 
 @app.route('/hpdb/download/step1')
+@require_verified_email
 def hpdb_download_step1():
     runtime = get_hpdb_runtime()
     path = runtime.get('step1_file')
@@ -479,6 +516,7 @@ def hpdb_download_step1():
 
 
 @app.route('/hpdb/download/final')
+@require_verified_email
 def hpdb_download_final():
     runtime = get_hpdb_runtime()
     path = runtime.get('final_file') or runtime.get('hpdb_path')

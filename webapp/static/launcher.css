@@ -279,6 +279,47 @@ body {
 .panel-home {
     display: block;
 }
+.verification-banner {
+    margin: 10px 0;
+    padding: 12px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    display: none;
+    align-items: center;
+    gap: 10px;
+}
+.verification-banner.verification-success {
+    background: #1a4a2a;
+    border: 1px solid #2d6a3d;
+    color: #66d966;
+    display: flex;
+}
+.verification-banner.verification-error {
+    background: #4a1a1a;
+    border: 1px solid #6a2d2d;
+    color: #ff6666;
+    display: flex;
+}
+.verification-banner button {
+    background: #E95420;
+    border: none;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s ease;
+}
+.verification-banner button:hover {
+    background: #ff6a35;
+}
+.welcome-label {
+    padding: 20px;
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+}
 .tool-shell {
     background: #111111;
     padding: 10px 10px 20px 10px;
