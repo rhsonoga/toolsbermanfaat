@@ -14,6 +14,12 @@
  * Call this function once when the page loads.
  */
 function initAuthModule() {
+    // Always setup UI elements, even if Supabase is not configured
+    setupTopActionButtons();
+    setupModalBackdrops();
+    updateLoginLogoutUI();
+    checkVerificationMessage();
+    
     const hasSupabase = window.supabaseReady === true;
     
     if (!hasSupabase) {
@@ -21,12 +27,11 @@ function initAuthModule() {
         return;
     }
     
+    // Only setup form handlers if Supabase is configured
     initSignupForm();
     initLoginForm();
     initLogoutButton();
     initResendButton();
-    checkVerificationMessage();
-    updateLoginLogoutUI();
 }
 
 // ============================================================
@@ -486,3 +491,10 @@ window.AuthModule = {
     handleLogoutClick,
     handleResendClick,
 };
+
+// Also export key functions globally for use in event listeners
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.initAuthModule = initAuthModule;
+window.setupModalBackdrops = setupModalBackdrops;
+window.setupTopActionButtons = setupTopActionButtons;

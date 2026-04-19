@@ -478,11 +478,9 @@
     syncCableHidden();
     validateCable();
     
-    // Initialize authentication module (email verification, login, logout)
+    // Initialize authentication module (email verification, login, logout, buttons)
     if (typeof initAuthModule === 'function') {
         initAuthModule();
-        setupModalBackdrops();
-        setupTopActionButtons();
     }
     </script>
 </body>
