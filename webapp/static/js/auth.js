@@ -108,30 +108,32 @@ async function handleSignupSubmit(e) {
         }
         
         // Success
-        showFeedback('signupFeedback', d (form submission only).
+        showFeedback('signupFeedback', data.message || 'Registrasi berhasil. Cek email Anda!', true);
+        
+        // Clear form
+        if (e.target && typeof e.target.reset === 'function') {
+            e.target.reset();
+        }
+        
+        // Close modal after 2 seconds
+        setTimeout(() => {
+            closeModal('signupModal');
+        }, 2000);
+        
+    } catch (err) {
+        showFeedback('signupFeedback', `Error: ${err.message}`, false);
+    }
+}
+
+/**
+ * Initialize login form event listeners (form submission only).
  * Close button is handled separately in setupModalCloseButtons().
  */
 function initLoginForm() {
     const loginForm = document.getElementById('loginForm');
     if (!loginForm) return;
     
-    loginForm.addEventListener('submit', handleLoginSubmit);   showFeedback('signupFeedback', `Error: ${err.message}`, false);
-    }
-}
-
-/**
- * Initialize login form event listeners.
- */
-function initLoginForm() {
-    const loginForm = document.getElementById('loginForm');
-    if (!loginForm) return;
-    
     loginForm.addEventListener('submit', handleLoginSubmit);
-    
-    const closeBtn = document.getElementById('loginCloseBtn');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => closeModal('loginModal'));
-    }
 }
 
 /**
