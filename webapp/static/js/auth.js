@@ -17,6 +17,7 @@ function initAuthModule() {
     // Always setup UI elements, even if Supabase is not configured
     setupTopActionButtons();
     setupModalBackdrops();
+    setupModalCloseButtons();  // Setup close buttons - always needed
     updateLoginLogoutUI();
     checkVerificationMessage();
     
@@ -35,22 +36,38 @@ function initAuthModule() {
 }
 
 // ============================================================
+// MODAL CLOSE BUTTONS
+// ============================================================
+
+/**
+ * Setup modal close buttons (Cancel buttons).
+ * These are always needed, regardless of Supabase configuration.
+ */
+function setupModalCloseButtons() {
+    const signupCloseBtn = document.getElementById('signupCloseBtn');
+    if (signupCloseBtn) {
+        signupCloseBtn.addEventListener('click', () => closeModal('signupModal'));
+    }
+    
+    const loginCloseBtn = document.getElementById('loginCloseBtn');
+    if (loginCloseBtn) {
+        loginCloseBtn.addEventListener('click', () => closeModal('loginModal'));
+    }
+}
+
+// ============================================================
 // FORM HANDLERS
 // ============================================================
 
 /**
- * Initialize signup form event listeners.
+ * Initialize signup form event listeners (form submission only).
+ * Close button is handled separately in setupModalCloseButtons().
  */
 function initSignupForm() {
     const signupForm = document.getElementById('signupForm');
     if (!signupForm) return;
     
     signupForm.addEventListener('submit', handleSignupSubmit);
-    
-    const closeBtn = document.getElementById('signupCloseBtn');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => closeModal('signupModal'));
-    }
 }
 
 /**
@@ -91,18 +108,14 @@ async function handleSignupSubmit(e) {
         }
         
         // Success
-        showFeedback('signupFeedback', data.message || 'Registrasi berhasil. Cek email Anda!', true);
-        
-        // Clear form
-        signupForm.reset();
-        
-        // Close modal after 2 seconds
-        setTimeout(() => {
-            closeModal('signupModal');
-        }, 2000);
-        
-    } catch (err) {
-        showFeedback('signupFeedback', `Error: ${err.message}`, false);
+        showFeedback('signupFeedback', d (form submission only).
+ * Close button is handled separately in setupModalCloseButtons().
+ */
+function initLoginForm() {
+    const loginForm = document.getElementById('loginForm');
+    if (!loginForm) return;
+    
+    loginForm.addEventListener('submit', handleLoginSubmit);   showFeedback('signupFeedback', `Error: ${err.message}`, false);
     }
 }
 
