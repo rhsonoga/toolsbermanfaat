@@ -110,50 +110,26 @@ async function handleLoginSubmit(e) {
 // ============================================================
 
 /**
- * Initialize logout button.
+ * Compatibility wrapper: delegate logout initialization to modular auth file.
  */
 function initLogoutButton() {
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (!logoutBtn) return;
-    
-    logoutBtn.addEventListener('click', handleLogoutClick);
+    if (window.AuthLogout && typeof window.AuthLogout.initLogoutButton === 'function') {
+        window.AuthLogout.initLogoutButton();
+        return;
+    }
+
+    console.warn('Auth Module: Logout module not loaded (initLogoutButton)');
 }
 
 /**
- * Handle logout button click.
+ * Compatibility wrapper for external callers.
  */
 async function handleLogoutClick(e) {
-    e.preventDefault();
-    
-    if (!confirm('Yakin ingin logout?')) {
-        return;
+    if (window.AuthLogout && typeof window.AuthLogout.handleLogoutClick === 'function') {
+        return window.AuthLogout.handleLogoutClick(e);
     }
-    
-    try {
-        const res = await fetch('/auth/logout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
-        
-        const data = await res.json();
-        
-        if (!res.ok || !data.ok) {
-            alert('Logout gagal: ' + (data.error || 'Unknown error'));
-            return;
-        }
-        
-        // Success
-        updateAuthStrip('');
-        updateLoginLogoutUI();
-        
-        // Redirect to home
-        setTimeout(() => {
-            window.location.href = '/';
-        }, 500);
-        
-    } catch (err) {
-        alert(`Error: ${err.message}`);
-    }
+
+    console.warn('Auth Module: Logout module not loaded (handleLogoutClick)');
 }
 
 // ============================================================
@@ -161,96 +137,37 @@ async function handleLogoutClick(e) {
 // ============================================================
 
 /**
- * Initialize resend verification button.
+ * Compatibility wrapper: delegate resend initialization to modular auth file.
  */
 function initResendButton() {
-    const resendBtn = document.getElementById('resendVerificationBtn');
-    if (!resendBtn) return;
-    
-    resendBtn.addEventListener('click', handleResendClick);
-}
-
-/**
- * Handle resend verification button click.
- */
-async function handleResendClick(e) {
-    e.preventDefault();
-    
-    let email = prompt('Masukkan email Anda untuk mengirim ulang verifikasi:');
-    if (!email || !email.trim()) {
+    if (window.AuthVerification && typeof window.AuthVerification.initResendButton === 'function') {
+        window.AuthVerification.initResendButton();
         return;
     }
-    
-    email = email.trim();
-    
-    try {
-        const res = await fetch('/auth/resend-verification', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
-        });
-        
-        const data = await res.json();
-        
-        if (!res.ok || !data.ok) {
-            alert(data.error || 'Gagal mengirim email verifikasi');
-            return;
-        }
-        
-        alert(data.message || 'Email verifikasi sudah dikirim. Cek inbox Anda!');
-        
-    } catch (err) {
-        alert(`Error: ${err.message}`);
-    }
+
+    console.warn('Auth Module: Verification module not loaded (initResendButton)');
 }
 
 /**
- * Check for verification messages in URL query parameters.
+ * Compatibility wrapper for external callers.
+ */
+async function handleResendClick(e) {
+    if (window.AuthVerification && typeof window.AuthVerification.handleResendClick === 'function') {
+        return window.AuthVerification.handleResendClick(e);
+    }
+
+    console.warn('Auth Module: Verification module not loaded (handleResendClick)');
+}
+
+/**
+ * Compatibility wrapper for verification message processing.
  */
 function checkVerificationMessage() {
-    const params = new URLSearchParams(window.location.search);
-    const verified = params.get('verified');
-    const error = params.get('verification_error');
-    
-    let banner = document.getElementById('verificationBanner');
-    
-    if (verified === 'true') {
-        updateAuthStrip(document.querySelector('[data-user-email]')?.dataset.userEmail || 'User');
-        updateLoginLogoutUI();
-        
-        // Show success banner
-        if (!banner) {
-            banner = createVerificationBanner('success');
-        } else {
-            banner.className = 'verification-banner verification-success';
-            banner.textContent = 'Email berhasil diverifikasi! Anda sekarang bisa menggunakan semua converter.';
-            banner.style.display = 'block';
-        }
-        
-        // Auto-hide after 5 seconds
-        setTimeout(() => {
-            if (banner) banner.style.display = 'none';
-        }, 5000);
-        
-    } else if (error) {
-        if (!banner) {
-            banner = createVerificationBanner('error');
-        } else {
-            banner.className = 'verification-banner verification-error';
-            banner.style.display = 'block';
-        }
-        
-        if (error === 'token_expired') {
-            banner.innerHTML = 'Link verifikasi sudah kadaluarsa. <button id="resendVerificationBtn">Kirim Ulang</button>';
-        } else {
-            banner.innerHTML = 'Terjadi kesalahan verifikasi. <button id="resendVerificationBtn">Coba Lagi</button>';
-        }
-        
-        const resendBtn = banner.querySelector('#resendVerificationBtn');
-        if (resendBtn) {
-            resendBtn.addEventListener('click', handleResendClick);
-        }
+    if (window.AuthVerification && typeof window.AuthVerification.checkVerificationMessage === 'function') {
+        return window.AuthVerification.checkVerificationMessage();
     }
+
+    console.warn('Auth Module: Verification module not loaded (checkVerificationMessage)');
 }
 
 // ============================================================
@@ -432,6 +349,10 @@ window.closeModal = closeModal;
 window.initAuthModule = initAuthModule;
 window.setupModalBackdrops = setupModalBackdrops;
 window.setupTopActionButtons = setupTopActionButtons;
+window.showFeedback = showFeedback;
+window.updateAuthStrip = updateAuthStrip;
+window.updateLoginLogoutUI = updateLoginLogoutUI;
+window.createVerificationBanner = createVerificationBanner;
 
 // ============================================================
 // AUTO-INITIALIZATION
