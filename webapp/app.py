@@ -5,6 +5,7 @@ import tempfile
 import requests
 from flask import Flask, request, render_template, send_from_directory, send_file, redirect, url_for, session, flash, jsonify
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import HTTPException
 from datetime import datetime
 from contextlib import contextmanager
 
@@ -209,6 +210,41 @@ def base_context(active_menu='home', cable_report='', form_state=None):
         'auth_user': session.get('auth_user', {}),
         'supabase_ready': supabase_ready()
     }
+
+
+def _menu_from_request_path(path):
+    if path.startswith('/cable/'):
+        return 'cable'
+    if path.startswith('/boq/'):
+        return 'boq'
+    if path.startswith('/hpdb/'):
+        return 'hpdb'
+    return request.args.get('menu', 'home')
+
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(err):
+    # Keep explicit HTTP responses (404/405/etc) untouched.
+    if isinstance(err, HTTPException):
+        return err
+
+    app.logger.exception('Unhandled exception: %s %s', request.method, request.path)
+
+    if request.accept_mimetypes.get('application/json'):
+        return jsonify({
+            'ok': False,
+            'error': 'Terjadi kesalahan internal server. Silakan coba lagi.'
+        }), 500
+
+    try:
+        flash('Terjadi kesalahan internal server. Detail error sudah dicatat di log server.')
+        return render_template(
+            'main.html',
+            **base_context(active_menu=_menu_from_request_path(request.path), form_state=request.form.to_dict(flat=True))
+        ), 500
+    except Exception:
+        # Final fallback if template rendering also fails.
+        return 'Internal Server Error', 500
 
 
 @app.route('/auth/signup', methods=['POST'])
