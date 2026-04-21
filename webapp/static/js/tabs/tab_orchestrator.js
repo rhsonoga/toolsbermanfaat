@@ -3,7 +3,7 @@
         const activeMenu = document.body?.dataset?.activeMenu || 'home';
 
         if (window.BrowserTabsModule && typeof window.BrowserTabsModule.initBrowserTabs === 'function') {
-            window.BrowserTabsModule.initBrowserTabs('kmz');
+            window.BrowserTabsModule.initBrowserTabs('history');
         }
 
         if (window.KmzConverterTabModule && typeof window.KmzConverterTabModule.initKmzConverterTab === 'function') {

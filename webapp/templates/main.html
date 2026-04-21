@@ -9,7 +9,6 @@
         window.supabaseReady = {{ 'true' if supabase_ready else 'false' }};
     </script>
     <script src="/static/js/auth/signup_login.js" defer></script>
-    <script src="/static/js/auth/logout.js" defer></script>
     <script src="/static/js/auth/verification.js" defer></script>
     <script src="/static/js/auth.js" defer></script>
     <script src="/static/js/tabs/browser_tabs.js" defer></script>
@@ -29,18 +28,14 @@
             <div class="top-actions">
                 <button type="button" class="top-btn" id="openSignupBtn">Sign Up</button>
                 <button type="button" class="top-btn" id="openLoginBtn">Login</button>
-                <button type="button" class="top-btn" id="logoutBtn" style="display: none;">Logout</button>
-                <button type="button" class="top-btn top-btn-gear" id="openSettingBtn" aria-label="Setting" title="Setting">
-                    <span class="gear-icon" aria-hidden="true">&#9881;</span>
-                </button>
             </div>
         </div>
 
         <div class="auth-strip" id="authStrip">{% if auth_user and auth_user.get('email') %}Login sebagai {{ auth_user.get('email') }}{% else %}Belum login{% endif %}</div>
 
         <div class="browser-tabs">
-            <button type="button" class="browser-tab" data-browser-tab="history">Tutorial</button>
-            <button type="button" class="browser-tab active" data-browser-tab="kmz">KMZ Converter</button>
+            <button type="button" class="browser-tab active" data-browser-tab="history">Tutorial</button>
+            <button type="button" class="browser-tab" data-browser-tab="kmz">KMZ Converter</button>
             <button type="button" class="browser-tab" data-browser-tab="tools">GIS</button>
         </div>
 
