@@ -322,29 +322,29 @@ def cable_calculate():
 @app.route('/boq/convert', methods=['POST'])
 @require_verified_email
 def boq_convert():
-    action = (request.form.get('boq_action') or '').upper()
-    if action == 'RESET':
-        return boq_reset()
-
-    file = request.files.get('boq_file')
-    mode = (request.form.get('boq_mode') or action or 'CLUSTER').upper()
-    if not file or not file.filename:
-        flash('Pilih file KMZ untuk BOQ Converter.')
-        session['boq_log'] = ['❌ ERROR: Pilih file KMZ terlebih dahulu.']
-        session.modified = True
-        return render_template('main.html', **base_context(active_menu='boq', form_state=request.form.to_dict(flat=True)))
-    if not allowed_file(file.filename):
-        flash('Format file BOQ harus .kmz')
-        session['boq_log'] = ['❌ ERROR: Format file harus .kmz']
-        session.modified = True
-        return render_template('main.html', **base_context(active_menu='boq', form_state=request.form.to_dict(flat=True)))
-
-    job_dir = make_job_dir('boq')
-    filename = secure_filename(file.filename)
-    kmz_path = os.path.join(job_dir, filename)
-    file.save(kmz_path)
-
     try:
+        action = (request.form.get('boq_action') or '').upper()
+        if action == 'RESET':
+            return boq_reset()
+
+        file = request.files.get('boq_file')
+        mode = (request.form.get('boq_mode') or action or 'CLUSTER').upper()
+        if not file or not file.filename:
+            flash('Pilih file KMZ untuk BOQ Converter.')
+            session['boq_log'] = ['❌ ERROR: Pilih file KMZ terlebih dahulu.']
+            session.modified = True
+            return render_template('main.html', **base_context(active_menu='boq', form_state=request.form.to_dict(flat=True)))
+        if not allowed_file(file.filename):
+            flash('Format file BOQ harus .kmz')
+            session['boq_log'] = ['❌ ERROR: Format file harus .kmz']
+            session.modified = True
+            return render_template('main.html', **base_context(active_menu='boq', form_state=request.form.to_dict(flat=True)))
+
+        job_dir = make_job_dir('boq')
+        filename = secure_filename(file.filename)
+        kmz_path = os.path.join(job_dir, filename)
+        file.save(kmz_path)
+
         session['boq_log'] = [
             f"MODE AKTIF: {mode}",
             "Sedang memproses... mohon tunggu.",
@@ -371,6 +371,8 @@ def boq_convert():
         session.modified = True
         flash(f'BOQ Converter berhasil ({mode}).')
     except Exception as e:
+        app.logger.exception('BOQ converter failed')
+        mode = (request.form.get('boq_mode') or request.form.get('boq_action') or 'CLUSTER').upper()
         session['boq_log'] = [
             f"MODE AKTIF: {mode}",
             "Sedang memproses... mohon tunggu.",
