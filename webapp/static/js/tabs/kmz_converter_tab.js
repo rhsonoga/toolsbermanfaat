@@ -32,7 +32,6 @@
         const cableOutput = document.getElementById('cableOutput');
         const generateBtn = document.getElementById('generateBtn');
         const clearBtn = document.getElementById('clearBtn');
-        const topToggle = document.getElementById('topToggle');
 
         function syncCableHidden() {
             const postLineName = document.getElementById('post_line_name');
@@ -124,12 +123,6 @@
                 if (cableOutput) cableOutput.value = '';
                 syncCableHidden();
                 updateCableUIState();
-            });
-        }
-
-        if (topToggle) {
-            topToggle.addEventListener('change', () => {
-                document.body.classList.toggle('top-mode', topToggle.checked);
             });
         }
 

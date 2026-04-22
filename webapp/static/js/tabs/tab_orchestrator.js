@@ -1,13 +1,15 @@
 (function () {
     function initTabModules() {
         const activeMenu = document.body?.dataset?.activeMenu || 'home';
+        const kmzMenus = new Set(['cable', 'hpdb', 'boq']);
+        const defaultBrowserTab = kmzMenus.has(activeMenu) ? 'kmz' : 'history';
 
         if (window.BrowserTabsModule && typeof window.BrowserTabsModule.initBrowserTabs === 'function') {
-            window.BrowserTabsModule.initBrowserTabs('history');
+            window.BrowserTabsModule.initBrowserTabs(defaultBrowserTab);
         }
 
         if (window.KmzConverterTabModule && typeof window.KmzConverterTabModule.initKmzConverterTab === 'function') {
-            window.KmzConverterTabModule.initKmzConverterTab('cable');
+            window.KmzConverterTabModule.initKmzConverterTab(kmzMenus.has(activeMenu) ? activeMenu : 'cable');
         }
 
         if (window.TutorialTabModule && typeof window.TutorialTabModule.initTutorialTab === 'function') {

@@ -1,7 +1,7 @@
 """Decorators for authentication and authorization."""
 
 from functools import wraps
-from flask import session, redirect, url_for, request, jsonify
+from flask import session, redirect, url_for, request, jsonify, flash
 
 def require_verified_email(f):
     """
@@ -25,6 +25,7 @@ def require_verified_email(f):
                     'ok': False,
                     'error': 'Belum login. Silakan login terlebih dahulu.'
                 }), 401
+            flash('Silakan login terlebih dahulu untuk menggunakan Cable Calculator.')
             return redirect(url_for('main_launcher', menu='home'))
         
         auth_user = session.get('auth_user', {})
@@ -41,6 +42,7 @@ def require_verified_email(f):
                 }), 403
             
             # For page endpoints, redirect to home with error message
+            flash('Email belum diverifikasi. Cek inbox Anda lalu verifikasi akun untuk memakai converter.')
             return redirect(url_for('main_launcher', 
                                    menu='home',
                                    verification_error='not_verified'))
