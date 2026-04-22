@@ -347,10 +347,19 @@ def cable_calculate():
     try:
         form_state = request.form.to_dict(flat=True)
         report = build_cable_report(request.form)
-        flash('Cable Calculator berhasil dihitung.')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return jsonify({
+                'ok': True,
+                'report': report,
+                'form_state': form_state,
+            })
         return render_template('main.html', **base_context(active_menu='cable', cable_report=report, form_state=form_state))
     except Exception as e:
-        flash(f'Cable Calculator error: {e}')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return jsonify({
+                'ok': False,
+                'error': str(e),
+            }), 400
         return render_template('main.html', **base_context(active_menu='cable', form_state=request.form.to_dict(flat=True)))
 
 

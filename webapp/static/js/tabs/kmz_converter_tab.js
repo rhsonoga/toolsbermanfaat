@@ -32,6 +32,7 @@
         const cableOutput = document.getElementById('cableOutput');
         const generateBtn = document.getElementById('generateBtn');
         const clearBtn = document.getElementById('clearBtn');
+        const cableForm = document.getElementById('cableForm');
 
         function syncCableHidden() {
             const postLineName = document.getElementById('post_line_name');
@@ -128,6 +129,46 @@
 
         if (generateBtn) {
             generateBtn.addEventListener('click', syncCableHidden);
+        }
+
+        if (cableForm) {
+            cableForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                syncCableHidden();
+
+                if (generateBtn) {
+                    generateBtn.disabled = true;
+                    generateBtn.dataset.originalText = generateBtn.dataset.originalText || generateBtn.textContent;
+                    generateBtn.textContent = 'PROCESSING...';
+                }
+
+                try {
+                    const response = await fetch(cableForm.action, {
+                        method: 'POST',
+                        body: new FormData(cableForm),
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                        },
+                    });
+
+                    const payload = await response.json();
+
+                    if (response.ok && payload.ok) {
+                        if (cableOutput) cableOutput.value = payload.report || '';
+                    } else {
+                        const errorMessage = payload.error || 'Cable Calculator gagal diproses.';
+                        if (cableOutput) cableOutput.value = errorMessage;
+                    }
+                } catch (error) {
+                    if (cableOutput) cableOutput.value = `Cable Calculator error: ${error.message}`;
+                } finally {
+                    if (generateBtn) {
+                        generateBtn.disabled = false;
+                        generateBtn.textContent = generateBtn.dataset.originalText || 'GENERATE REPORT';
+                    }
+                }
+            });
         }
 
         const oltModal = document.getElementById('oltModal');
