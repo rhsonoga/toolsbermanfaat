@@ -15,6 +15,7 @@
     <script src="/static/js/tabs/kmz_converter_tab.js" defer></script>
     <script src="/static/js/tabs/tutorial_tab.js" defer></script>
     <script src="/static/js/tabs/gis_tab.js" defer></script>
+    <script src="/static/js/modules/premium_overlay_handler.js" defer></script>
     <script src="/static/js/tabs/tab_orchestrator.js" defer></script>
 </head>
 <body data-active-menu="{{ active_menu or 'home' }}">
@@ -153,46 +154,47 @@
 
                             <!-- HPDB CONVERTER PANEL -->
                             <div class="panel" data-panel="hpdb">
-                                <div class="tool-shell">
-                                    <div class="panel-title">HPDB INJECTOR SYSTEM</div>
-                                    <div class="group-box">
-                                        <div class="group-label">SOURCE KMZ :</div>
-                                        <div class="path-row">
-                                            <input type="text" id="hpdb_source_display" class="field-control" value="{{ form_state.get('hpdb_source_display', '') }}" readonly>
-                                            <button type="button" class="mini-btn" id="hpdbBrowseBtn">Browse</button>
+                                <div class="panel-wrapper" id="hpdb_panel_wrapper" data-auth-status="{{ auth_status }}">
+                                    <div class="tool-shell">
+                                        <div class="panel-title">HPDB INJECTOR SYSTEM</div>
+                                        <div class="group-box">
+                                            <div class="group-label">SOURCE KMZ :</div>
+                                            <div class="path-row">
+                                                <input type="text" id="hpdb_source_display" class="field-control" value="{{ form_state.get('hpdb_source_display', '') }}" readonly>
+                                                <button type="button" class="mini-btn" id="hpdbBrowseBtn">Browse</button>
+                                            </div>
+                                            <div class="action-stack">
+                                                <form method="post" action="{{ url_for('hpdb_process') }}" enctype="multipart/form-data" class="inline-form">
+                                                    <input type="hidden" name="hpdb_action" value="step1">
+                                                    <input type="file" name="hpdb_file" id="hpdb_source_file" class="hidden-file" accept=".kmz">
+                                                    <button type="submit" class="tool-btn">STEP 1: CONVERTING KMZ</button>
+                                                </form>
+                                                <form method="post" action="{{ url_for('hpdb_process') }}" enctype="multipart/form-data" class="inline-form">
+                                                    <input type="hidden" name="hpdb_action" value="step2">
+                                                    <input type="file" name="hpdb_file" id="hpdb_source_file_step2" class="hidden-file" accept=".kmz">
+                                                    <button type="submit" class="tool-btn">STEP 2: INJECT TO HPDB (BASIC)</button>
+                                                </form>
+                                            </div>
                                         </div>
-                                        <div class="action-stack">
-                                            <form method="post" action="{{ url_for('hpdb_process') }}" enctype="multipart/form-data" class="inline-form">
-                                                <input type="hidden" name="hpdb_action" value="step1">
-                                                <input type="file" name="hpdb_file" id="hpdb_source_file" class="hidden-file" accept=".kmz">
-                                                <button type="submit" class="tool-btn">STEP 1: CONVERTING KMZ</button>
-                                            </form>
-                                            <form method="post" action="{{ url_for('hpdb_process') }}" enctype="multipart/form-data" class="inline-form">
-                                                <input type="hidden" name="hpdb_action" value="step2">
-                                                <input type="file" name="hpdb_file" id="hpdb_source_file_step2" class="hidden-file" accept=".kmz">
-                                                <button type="submit" class="tool-btn">STEP 2: INJECT TO HPDB (BASIC)</button>
-                                            </form>
-                                        </div>
-                                    </div>
 
-                                    <div class="group-box">
-                                        <div class="group-label"> Synchronization </div>
-                                        <div class="subnote">Basic file (path jangan di edit)</div>
-                                        <div class="path-row">
-                                            <input type="text" id="hpdb_path_display" class="field-control" value="{{ hpdb_runtime.hpdb_path or '' }}" readonly>
-                                            <input type="file" id="hpdb_basic_file" class="hidden-file" accept=".xlsx">
-                                            <button type="button" class="mini-btn" id="hpdbBasicBrowseBtn">Browse</button>
+                                        <div class="group-box">
+                                            <div class="group-label"> Synchronization </div>
+                                            <div class="subnote">Basic file (path jangan di edit)</div>
+                                            <div class="path-row">
+                                                <input type="text" id="hpdb_path_display" class="field-control" value="{{ hpdb_runtime.hpdb_path or '' }}" readonly>
+                                                <input type="file" id="hpdb_basic_file" class="hidden-file" accept=".xlsx">
+                                                <button type="button" class="mini-btn" id="hpdbBasicBrowseBtn">Browse</button>
+                                            </div>
+                                            <form method="post" action="{{ url_for('hpdb_process') }}" enctype="multipart/form-data" class="inline-form">
+                                                <input type="hidden" name="hpdb_action" value="step3">
+                                                <input type="file" name="hpdb_file" id="hpdb_source_file_step3" class="hidden-file" accept=".kmz">
+                                                <button type="submit" class="tool-btn">STEP 3: SYNC KOLOM A-K (FINAL)</button>
+                                            </form>
                                         </div>
-                                        <form method="post" action="{{ url_for('hpdb_process') }}" enctype="multipart/form-data" class="inline-form">
-                                            <input type="hidden" name="hpdb_action" value="step3">
-                                            <input type="file" name="hpdb_file" id="hpdb_source_file_step3" class="hidden-file" accept=".kmz">
-                                            <button type="submit" class="tool-btn">STEP 3: SYNC KOLOM A-K (FINAL)</button>
-                                        </form>
-                                    </div>
 
-                                    <div class="log-header">
-                                        <span>Log Report :</span>
-                                        <form method="post" action="{{ url_for('hpdb_reset') }}">
+                                        <div class="log-header">
+                                            <span>Log Report :</span>
+                                            <form method="post" action="{{ url_for('hpdb_reset') }}">
                                             <button type="submit" class="reset-btn">RESET</button>
                                         </form>
                                     </div>
@@ -203,40 +205,43 @@
                                         <a class="download-btn" href="{{ url_for('hpdb_download_final') }}">Download Final HPDB</a>
                                     </div>
                                 </div>
+                                </div>
                             </div>
 
                             <!-- BOQ CONVERTER PANEL -->
                             <div class="panel" data-panel="boq">
-                                <div class="tool-shell">
-                                    <div class="panel-title">KMZ to BoQ CONVERTER SYSTEM</div>
-                                    <div class="group-box">
-                                        <div class="group-label"> SOURCE KMZ : </div>
-                                        <div class="path-row">
-                                            <input type="text" id="boq_source_display" class="field-control" value="{{ form_state.get('boq_source_display', '') }}" readonly>
-                                            <button type="button" class="mini-btn" id="boqBrowseBtn">Browse</button>
-                                        </div>
-                                        <form method="post" action="{{ url_for('boq_convert') }}" enctype="multipart/form-data" class="boq-form">
-                                            <input type="file" name="boq_file" id="boq_source_file" class="hidden-file" accept=".kmz">
-                                            <div class="action-row">
-                                                <button type="submit" class="tool-btn" name="boq_action" value="CLUSTER">PROSES CLUSTER</button>
-                                                <button type="submit" class="tool-btn" name="boq_action" value="FEEDER">PROSES FEEDER</button>
+                                <div class="panel-wrapper" id="boq_panel_wrapper" data-auth-status="{{ auth_status }}">
+                                    <div class="tool-shell">
+                                        <div class="panel-title">KMZ to BoQ CONVERTER SYSTEM</div>
+                                        <div class="group-box">
+                                            <div class="group-label"> SOURCE KMZ : </div>
+                                            <div class="path-row">
+                                                <input type="text" id="boq_source_display" class="field-control" value="{{ form_state.get('boq_source_display', '') }}" readonly>
+                                                <button type="button" class="mini-btn" id="boqBrowseBtn">Browse</button>
                                             </div>
-                                        </form>
-                                    </div>
+                                            <form method="post" action="{{ url_for('boq_convert') }}" enctype="multipart/form-data" class="boq-form">
+                                                <input type="file" name="boq_file" id="boq_source_file" class="hidden-file" accept=".kmz">
+                                                <div class="action-row">
+                                                    <button type="submit" class="tool-btn" name="boq_action" value="CLUSTER">PROSES CLUSTER</button>
+                                                    <button type="submit" class="tool-btn" name="boq_action" value="FEEDER">PROSES FEEDER</button>
+                                                </div>
+                                            </form>
+                                        </div>
 
-                                    <div class="log-header">
-                                        <span>Log Report :</span>
-                                        <form method="post" action="{{ url_for('boq_reset') }}">
-                                            <button type="submit" class="reset-btn">RESET</button>
-                                        </form>
-                                    </div>
-                                    <textarea class="log-box" readonly>{% for line in boq_state.log %}{{ line }}
+                                        <div class="log-header">
+                                            <span>Log Report :</span>
+                                            <form method="post" action="{{ url_for('boq_reset') }}">
+                                                <button type="submit" class="reset-btn">RESET</button>
+                                            </form>
+                                        </div>
+                                        <textarea class="log-box" readonly>{% for line in boq_state.log %}{{ line }}
 {% endfor %}</textarea>
 
-                                    <div class="download-row">
-                                        <a class="download-btn" href="{{ url_for('boq_download_mid') }}">Download Hasil Konversi</a>
-                                        <a class="download-btn" href="{{ url_for('boq_download_final') }}">Download BOQ Final</a>
+                                        <div class="download-row">
+                                            <a class="download-btn" href="{{ url_for('boq_download_mid') }}">Download Hasil Konversi</a>
+                                            <a class="download-btn" href="{{ url_for('boq_download_final') }}">Download BOQ Final</a>
                                     </div>
+                                </div>
                                 </div>
                             </div>
                         </div>

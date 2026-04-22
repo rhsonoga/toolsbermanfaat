@@ -665,6 +665,98 @@ td form button {
     gap: 10px;
     margin-top: 10px;
 }
+.panel-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    z-index: 100;
+    pointer-events: none;
+}
+.panel-overlay.active {
+    pointer-events: auto;
+}
+.panel-wrapper {
+    position: relative;
+}
+.panel-wrapper.blurred {
+    filter: blur(3px);
+    pointer-events: none;
+}
+.premium-content {
+    text-align: center;
+    color: #ffffff;
+    pointer-events: auto;
+    animation: slideIn 0.3s ease-out;
+}
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+.premium-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    display: block;
+}
+.premium-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #ffd700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+.premium-subtitle {
+    font-size: 14px;
+    color: #b0b0b0;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+.premium-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+.premium-signup-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 24px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+.premium-signup-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+}
+.premium-login-link {
+    font-size: 12px;
+    color: #b0b0b0;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+.premium-login-link:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
 @media (max-width: 700px) {
     .browser-topbar { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px; }
     .top-actions { justify-content: flex-end; }

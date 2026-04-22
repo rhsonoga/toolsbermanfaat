@@ -12,6 +12,21 @@
             window.KmzConverterTabModule.initKmzConverterTab(kmzMenus.has(activeMenu) ? activeMenu : 'cable');
         }
 
+        if (window.PremiumOverlayModule && typeof window.PremiumOverlayModule.initPremiumOverlay === 'function') {
+            const hpdbWrapper = document.getElementById('hpdb_panel_wrapper');
+            const boqWrapper = document.getElementById('boq_panel_wrapper');
+            
+            if (hpdbWrapper) {
+                const hpdbAuthStatus = hpdbWrapper.getAttribute('data-auth-status') || 'not_login';
+                window.PremiumOverlayModule.initPremiumOverlay('hpdb_panel_wrapper', hpdbAuthStatus);
+            }
+            
+            if (boqWrapper) {
+                const boqAuthStatus = boqWrapper.getAttribute('data-auth-status') || 'not_login';
+                window.PremiumOverlayModule.initPremiumOverlay('boq_panel_wrapper', boqAuthStatus);
+            }
+        }
+
         if (window.TutorialTabModule && typeof window.TutorialTabModule.initTutorialTab === 'function') {
             window.TutorialTabModule.initTutorialTab();
         }

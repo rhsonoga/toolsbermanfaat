@@ -275,6 +275,25 @@ def add_history(entry):
     session.modified = True
 
 
+def get_auth_status(auth_user=None):
+    """
+    Determine authentication status for premium overlay.
+    
+    Returns:
+        'verified': User is logged in and email is verified
+        'need_verify': User is logged in but email is not verified
+        'not_login': User is not logged in
+    """
+    if not auth_user:
+        return 'not_login'
+    
+    email_verified_at = auth_user.get('email_verified_at')
+    if email_verified_at:
+        return 'verified'
+    else:
+        return 'need_verify'
+
+
 def base_context(active_menu='home', cable_report='', form_state=None):
     cfg = get_cable_config()
     form_state = form_state or {}
@@ -286,6 +305,10 @@ def base_context(active_menu='home', cable_report='', form_state=None):
         form_state['boq_source_display'] = session.get('boq_source_display', '')
     if session.get('boq_mode_last') and not form_state.get('boq_mode'):
         form_state['boq_mode'] = session.get('boq_mode_last', '')
+    
+    auth_user = session.get('auth_user', {})
+    auth_status = get_auth_status(auth_user)
+    
     return {
         'active_menu': active_menu,
         'disable_upload': bool(IS_VERCEL),
@@ -298,7 +321,8 @@ def base_context(active_menu='home', cable_report='', form_state=None):
         'line_names': cfg.get('line_names', []),
         'cable_types': cfg.get('cable_types', []),
         'categories': cfg.get('cable_categories', []),
-        'auth_user': session.get('auth_user', {}),
+        'auth_user': auth_user,
+        'auth_status': auth_status,
         'supabase_ready': supabase_ready()
     }
 
