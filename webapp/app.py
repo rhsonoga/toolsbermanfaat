@@ -142,6 +142,92 @@ def get_boq_session_state():
     }
 
 
+def validate_cable_form(form):
+    """Validate cable calculator form data.
+    
+    Returns: (is_valid, error_message)
+    - is_valid: True if all validations pass
+    - error_message: Descriptive message if validation fails, else None
+    """
+    try:
+        line_name = form.get('line_name', '').strip()
+        cable_type = form.get('cable_type', '').strip()
+        category = form.get('category', '').strip()
+        route = form.get('route', '').strip()
+        fdt = form.get('fdt', '').strip()
+        fat = form.get('fat', '').strip()
+        code = form.get('code', '').strip()
+        olt = form.get('olt', '').strip()
+        segment = form.get('segment', '').strip()
+        
+        # Always required
+        if not line_name:
+            return False, "Line Name wajib dipilih."
+        if not cable_type:
+            return False, "Cable Type wajib dipilih."
+        if not route:
+            return False, "Total Route (M) wajib diisi."
+        if not fat:
+            return False, "Slack FAT/SF/MF wajib diisi."
+        
+        # Validate numeric fields
+        try:
+            route_val = float(route)
+            if route_val <= 0:
+                return False, "Total Route harus nilai positif."
+        except ValueError:
+            return False, "Total Route harus angka valid."
+        
+        try:
+            fat_val = int(fat)
+            if fat_val < 0:
+                return False, "Slack FAT/SF/MF harus >= 0."
+        except ValueError:
+            return False, "Slack FAT/SF/MF harus angka valid."
+        
+        # Mode-specific required fields
+        if 'SUBFEEDER' in line_name:
+            if not fdt:
+                return False, "Slack FDT wajib untuk SUBFEEDER."
+            if not code:
+                return False, "FDT Code wajib untuk SUBFEEDER."
+            if not olt:
+                return False, "OLT Code wajib untuk SUBFEEDER."
+            try:
+                int(fdt)
+            except ValueError:
+                return False, "Slack FDT harus angka valid."
+                
+        elif 'MAINFEEDER' in line_name or 'HUBFEEDER' in line_name:
+            if not olt:
+                return False, "OLT Code wajib untuk MAINFEEDER/HUBFEEDER."
+            if not segment:
+                return False, "Segment wajib untuk MAINFEEDER/HUBFEEDER."
+                
+        elif 'LINE' in line_name:
+            if not fdt:
+                return False, "Slack FDT wajib untuk LINE."
+            if not code:
+                return False, "FDT Code wajib untuk LINE."
+            try:
+                int(fdt)
+            except ValueError:
+                return False, "Slack FDT harus angka valid."
+        
+        # Tolerance validation (optional, default 5.0)
+        try:
+            tol = float(form.get('tol', '5.0') or 5.0)
+            if tol < 0 or tol > 100:
+                return False, "Toleransi harus antara 0-100%."
+        except ValueError:
+            return False, "Toleransi harus angka valid."
+        
+        return True, None
+        
+    except Exception as e:
+        return False, f"Validasi error: {str(e)}"
+
+
 def build_cable_report(form):
     route_val = float(form.get('route', '0') or 0)
     fdt = int(form.get('fdt', '0') or 0)
@@ -158,22 +244,27 @@ def build_cable_report(form):
     slack_m = total_unit * 20
     base = route_val + slack_m
     final = round(base + (base * (tol / 100)))
-    cat_short = category.split(' - ')[0] if category else ''
+    cat_short = category.split(' - ')[0] if category else 'N/A'
+
+    # Calculate summary line
+    summary_parts = []
+    if 'SUBFEEDER' in line_name:
+        summary_parts = [olt, code, line_name, f"({cable_type})", cat_short, f"{final} M"]
+    elif 'LINE' in line_name:
+        summary_parts = [code, line_name, f"({cable_type})", cat_short, f"{final} M"]
+    else:  # MAINFEEDER or HUBFEEDER
+        summary_parts = [olt, line_name, segment, f"({cable_type})", cat_short, f"{final} M"]
+    
+    summary_line = " - ".join(str(p) for p in summary_parts if p)
 
     report = (
         f"Total Route = {int(route_val)} M\n"
         f"Total Slack = {total_unit} unit ({fdt} slack FDT & {fat} slack FAT/SF/MF) @20M\n"
         f"Toleransi = {int(tol)}%\n"
         f"Total Length Cable = {int(route_val)}+{slack_m} = {int(base)}M + ({int(base)} x {int(tol)}%) = {final} M\n"
-        f"{'-' * 75}\n"
+        f"{'-' * 80}\n"
+        f"{summary_line}\n"
     )
-
-    if 'SUBFEEDER' in line_name:
-        report += f"{olt} - {code} - {line_name} ({cable_type}) - {cat_short} - {final} M"
-    elif 'LINE' in line_name:
-        report += f"{code} - {line_name} ({cable_type}) - {cat_short} - {final} M"
-    else:
-        report += f"{olt} - {line_name} {segment} ({cable_type}) - {cat_short} - {final} M"
     return report
 
 
@@ -346,6 +437,18 @@ def main_launcher():
 def cable_calculate():
     try:
         form_state = request.form.to_dict(flat=True)
+        
+        # Validate form data
+        is_valid, error_msg = validate_cable_form(request.form)
+        if not is_valid:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+                return jsonify({
+                    'ok': False,
+                    'error': error_msg,
+                }), 400
+            flash(error_msg)
+            return render_template('main.html', **base_context(active_menu='cable', form_state=form_state))
+        
         report = build_cable_report(request.form)
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
             return jsonify({
@@ -358,7 +461,7 @@ def cable_calculate():
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
             return jsonify({
                 'ok': False,
-                'error': str(e),
+                'error': f'Cable Calculator error: {str(e)}',
             }), 400
         return render_template('main.html', **base_context(active_menu='cable', form_state=request.form.to_dict(flat=True)))
 

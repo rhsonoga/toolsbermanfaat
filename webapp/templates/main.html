@@ -82,14 +82,14 @@
                             <div class="panel" data-panel="cable">
                                 <div class="tool-shell">
                                     <div class="tool-grid">
-                                        <div class="field-label">Line Name:</div>
+                                        <div class="field-label">Line Name: <span class="required-star">*</span></div>
                                         <select id="cable_name" class="field-control">
                                             {% for item in line_names %}
                                             <option value="{{ item }}" {% if form_state.get('line_name', '') == item %}selected{% endif %}>{{ item }}</option>
                                             {% endfor %}
                                         </select>
 
-                                        <div class="field-label">Cable Type:</div>
+                                        <div class="field-label">Cable Type: <span class="required-star">*</span></div>
                                         <select id="cable_type" class="field-control">
                                             {% for item in cable_types %}
                                             <option value="{{ item }}" {% if form_state.get('cable_type', '') == item %}selected{% endif %}>{{ item }}</option>
@@ -103,26 +103,29 @@
                                             {% endfor %}
                                         </select>
 
-                                        <div class="field-label">Total Route (M):</div>
+                                        <div class="field-label">Total Route (M): <span class="required-star">*</span></div>
                                         <input id="cable_route" class="field-control" type="number" step="any" value="{{ form_state.get('route', '') }}">
 
-                                        <div class="field-label">Slack FDT:</div>
+                                        <div class="field-label">Slack FDT: <span id="fdt_required" class="required-star" style="display:none;">*</span></div>
                                         <input id="cable_fdt" class="field-control" type="number" value="{{ form_state.get('fdt', '') }}">
 
-                                        <div class="field-label">Slack FAT/SF/MF:</div>
+                                        <div class="field-label">Slack FAT/SF/MF: <span class="required-star">*</span></div>
                                         <input id="cable_fat" class="field-control" type="number" value="{{ form_state.get('fat', '') }}">
 
-                                        <div class="field-label">FDT Code:</div>
+                                        <div class="field-label">FDT Code: <span id="code_required" class="required-star" style="display:none;">*</span></div>
                                         <input id="cable_code" class="field-control" type="text" value="{{ form_state.get('code', '') }}">
 
-                                        <div class="field-label">OLT Code:</div>
+                                        <div class="field-label">OLT Code: <span id="olt_required" class="required-star" style="display:none;">*</span></div>
                                         <div class="olt-row">
                                             <input id="cable_olt" class="field-control" type="text" value="{{ form_state.get('olt', '') }}">
                                             <button type="button" class="mini-btn" id="oltListBtn">List OLT</button>
                                         </div>
 
-                                        <div class="field-label">Segment:</div>
+                                        <div class="field-label">Segment: <span id="segment_required" class="required-star" style="display:none;">*</span></div>
                                         <input id="cable_seg" class="field-control" type="text" value="{{ form_state.get('segment', '') }}">
+
+                                        <div class="field-label">Tolerance (%):</div>
+                                        <input id="cable_tol" class="field-control" type="number" step="0.1" min="0" max="100" value="{{ form_state.get('tol', '5.0') }}">
                                     </div>
 
                                     <form method="post" action="{{ url_for('cable_calculate') }}" id="cableForm" class="tool-actions">
@@ -142,6 +145,7 @@
                                         </div>
                                     </form>
 
+                                    <div id="cableError" class="error-message" style="display:none;"></div>
                                     <div class="result-label">Calculated:</div>
                                     <textarea id="cableOutput" class="report-box" readonly>{{ cable_report or '' }}</textarea>
                                 </div>

@@ -177,6 +177,21 @@ body {
 .auth-feedback.error {
     color: #ff8e8e;
 }
+.required-star {
+    color: #ff5555;
+    font-weight: bold;
+    margin-left: 2px;
+}
+.error-message {
+    background: #3a1f1f;
+    border: 1px solid #ff5555;
+    border-radius: 4px;
+    color: #ff8e8e;
+    padding: 10px 12px;
+    margin: 10px 0;
+    font-size: 12px;
+    line-height: 1.4;
+}
 .launcher-host {
     min-height: auto;
     display: grid;
