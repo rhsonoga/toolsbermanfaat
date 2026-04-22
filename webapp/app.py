@@ -21,6 +21,7 @@ from webapp.auth import (
     resend_verification_handler,
     logout_handler,
 )
+from webapp.premium import get_auth_status
 
 IS_VERCEL = os.environ.get('VERCEL', False) or os.environ.get('VERCEL_ENV', False)
 BASE_DIR = os.path.dirname(__file__)
@@ -273,25 +274,6 @@ def add_history(entry):
         session['history'] = []
     session['history'].append(entry)
     session.modified = True
-
-
-def get_auth_status(auth_user=None):
-    """
-    Determine authentication status for premium overlay.
-    
-    Returns:
-        'verified': User is logged in and email is verified
-        'need_verify': User is logged in but email is not verified
-        'not_login': User is not logged in
-    """
-    if not auth_user:
-        return 'not_login'
-    
-    email_verified_at = auth_user.get('email_verified_at')
-    if email_verified_at:
-        return 'verified'
-    else:
-        return 'need_verify'
 
 
 def base_context(active_menu='home', cable_report='', form_state=None):

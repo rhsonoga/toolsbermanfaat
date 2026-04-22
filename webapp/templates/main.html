@@ -5,6 +5,7 @@
     <title>TOOLS</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="/static/launcher.css">
+    <link rel="stylesheet" href="/static/premium-overlay.css">
     <script>
         window.supabaseReady = {{ 'true' if supabase_ready else 'false' }};
     </script>
@@ -16,6 +17,7 @@
     <script src="/static/js/tabs/tutorial_tab.js" defer></script>
     <script src="/static/js/tabs/gis_tab.js" defer></script>
     <script src="/static/js/modules/premium_overlay_handler.js" defer></script>
+    <script src="/static/js/tabs/premium_access_tab.js" defer></script>
     <script src="/static/js/tabs/tab_orchestrator.js" defer></script>
 </head>
 <body data-active-menu="{{ active_menu or 'home' }}">
