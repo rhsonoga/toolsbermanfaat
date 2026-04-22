@@ -7,7 +7,7 @@
         }
 
         if (window.KmzConverterTabModule && typeof window.KmzConverterTabModule.initKmzConverterTab === 'function') {
-            window.KmzConverterTabModule.initKmzConverterTab(activeMenu);
+            window.KmzConverterTabModule.initKmzConverterTab('cable');
         }
 
         if (window.TutorialTabModule && typeof window.TutorialTabModule.initTutorialTab === 'function') {

@@ -17,14 +17,7 @@
                 });
             });
 
-            setActive(activeFromServer || 'home');
-            if (activeFromServer === 'home' || !activeFromServer) {
-                const homePanel = document.querySelector('.panel-home');
-                if (homePanel) {
-                    homePanel.style.display = 'block';
-                }
-                menuBtns.forEach((btn) => btn.classList.remove('active'));
-            }
+            setActive(activeFromServer || 'cable');
         }
 
         const cableName = document.getElementById('cable_name');
