@@ -25,7 +25,7 @@ def require_verified_email(f):
                     'ok': False,
                     'error': 'Belum login. Silakan login terlebih dahulu.'
                 }), 401
-            flash('Silakan login terlebih dahulu untuk menggunakan Cable Calculator.')
+            flash('Silakan login terlebih dahulu untuk menggunakan converter ini.')
             return redirect(url_for('main_launcher', menu='home'))
         
         auth_user = session.get('auth_user', {})
@@ -42,7 +42,7 @@ def require_verified_email(f):
                 }), 403
             
             # For page endpoints, redirect to home with error message
-            flash('Email belum diverifikasi. Cek inbox Anda lalu verifikasi akun untuk memakai converter.')
+            flash('Email belum diverifikasi. Cek inbox Anda lalu verifikasi akun untuk memakai converter ini.')
             return redirect(url_for('main_launcher', 
                                    menu='home',
                                    verification_error='not_verified'))

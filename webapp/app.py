@@ -343,7 +343,6 @@ def main_launcher():
 
 
 @app.route('/cable/calculate', methods=['POST'])
-@require_verified_email
 def cable_calculate():
     try:
         form_state = request.form.to_dict(flat=True)
