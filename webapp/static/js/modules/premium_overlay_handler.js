@@ -31,16 +31,14 @@
     }
 
     function applyPremiumOverlay(panelElement, authStatus) {
-        // Wrap panel content in a panel-wrapper if not already
         if (!panelElement.classList.contains('panel-wrapper')) {
             panelElement.classList.add('panel-wrapper');
         }
 
-        // Mark panel as blurred
-        panelElement.classList.add('blurred');
+        const contentWrapper = ensurePanelContentWrapper(panelElement);
+        contentWrapper.classList.add('blurred');
 
-        // Remove any existing overlay
-        const existingOverlay = panelElement.querySelector('.panel-overlay');
+        const existingOverlay = getDirectChildByClass(panelElement, 'panel-overlay');
         if (existingOverlay) {
             existingOverlay.remove();
         }
@@ -118,19 +116,46 @@
         // Assemble overlay
         overlay.appendChild(content);
 
-        // Add overlay to panel
+        // Add overlay to panel as a sibling of the blurred content
         panelElement.appendChild(overlay);
     }
 
+    function ensurePanelContentWrapper(panelElement) {
+        let contentWrapper = getDirectChildByClass(panelElement, 'panel-content');
+
+        if (contentWrapper) {
+            return contentWrapper;
+        }
+
+        contentWrapper = document.createElement('div');
+        contentWrapper.className = 'panel-content';
+
+        const childNodes = Array.from(panelElement.children);
+        childNodes.forEach((child) => {
+            if (child.classList.contains('panel-overlay')) {
+                return;
+            }
+            contentWrapper.appendChild(child);
+        });
+
+        panelElement.appendChild(contentWrapper);
+        return contentWrapper;
+    }
+
     function removePremiumOverlay(panelElement) {
-        // Remove overlay if exists
-        const overlay = panelElement.querySelector('.panel-overlay');
+        const overlay = getDirectChildByClass(panelElement, 'panel-overlay');
         if (overlay) {
             overlay.remove();
         }
 
-        // Remove blurred class
-        panelElement.classList.remove('blurred');
+        const contentWrapper = getDirectChildByClass(panelElement, 'panel-content');
+        if (contentWrapper) {
+            contentWrapper.classList.remove('blurred');
+        }
+    }
+
+    function getDirectChildByClass(panelElement, className) {
+        return Array.from(panelElement.children).find((child) => child.classList.contains(className)) || null;
     }
 
     function triggerAuthAction(action) {
