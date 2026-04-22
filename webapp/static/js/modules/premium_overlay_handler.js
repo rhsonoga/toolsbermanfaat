@@ -78,11 +78,11 @@
         const signupBtn = document.createElement('a');
         signupBtn.className = 'premium-signup-btn';
         signupBtn.href = '#signup';
+        const primaryAction = authStatus === 'need_verify' ? 'verify' : 'signup';
         signupBtn.textContent = authStatus === 'need_verify' ? 'VERIFIKASI EMAIL' : 'SIGN UP';
         signupBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            // Scroll to auth section or trigger signup modal
-            triggerAuthAction(authStatus);
+            triggerAuthAction(primaryAction);
         });
 
         actions.appendChild(signupBtn);
@@ -159,24 +159,24 @@
     }
 
     function triggerAuthAction(action) {
-        /**
-         * Trigger authentication action by scrolling to auth section
-         * or dispatching custom event that can be listened to
-         */
-        const authSection = document.querySelector('[data-section="auth"]');
-        
-        if (authSection) {
-            // Scroll to auth section
-            authSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Normalize action and open the corresponding auth modal.
+        let normalizedAction = action;
+        if (action === 'not_login') normalizedAction = 'signup';
+        if (action === 'need_verify') normalizedAction = 'verify';
 
-            // Dispatch custom event for auth modal if available
-            window.dispatchEvent(new CustomEvent('auth:action', {
-                detail: { action: action } // 'signup', 'login', or 'verify'
-            }));
-        } else {
-            // Fallback: scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (typeof window.openModal === 'function') {
+            if (normalizedAction === 'signup') {
+                window.openModal('signupModal');
+            } else {
+                // login + verify both use login modal flow
+                window.openModal('loginModal');
+            }
         }
+
+        // Keep custom event for future hooks.
+        window.dispatchEvent(new CustomEvent('auth:action', {
+            detail: { action: normalizedAction }
+        }));
     }
 
     // Expose module to window
