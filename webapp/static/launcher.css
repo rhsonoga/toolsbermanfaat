@@ -546,6 +546,10 @@ body {
 .action-stack .inline-form {
     margin: 0;
 }
+.group-box .path-row + .inline-form {
+    display: block;
+    margin-top: 12px;
+}
 .steps-box {
     max-width: 720px;
     margin-top: 14px;
