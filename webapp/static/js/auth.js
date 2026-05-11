@@ -214,16 +214,16 @@ function updateLoginLogoutUI() {
     const loginBtn = document.getElementById('openLoginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
     
+    // [DISABLED] Always hide signup/login buttons - portals disabled for feature testing
+    if (signupBtn) signupBtn.style.display = 'none';
+    if (loginBtn) loginBtn.style.display = 'none';
+    
     // Check if user is logged in from auth strip
     const isLoggedIn = authStrip && !authStrip.textContent.includes('Belum login');
     
     if (isLoggedIn) {
-        if (signupBtn) signupBtn.style.display = 'none';
-        if (loginBtn) loginBtn.style.display = 'none';
         if (logoutBtn) logoutBtn.style.display = 'block';
     } else {
-        if (signupBtn) signupBtn.style.display = 'block';
-        if (loginBtn) loginBtn.style.display = 'block';
         if (logoutBtn) logoutBtn.style.display = 'none';
     }
 }
@@ -310,6 +310,9 @@ function setupTopActionButtons() {
     const loginBtn = document.getElementById('openLoginBtn');
     const settingBtn = document.getElementById('openSettingBtn');
     
+    // [DISABLED] Signup/Login portals disabled temporarily for feature testing
+    // Uncomment below to re-enable
+    /*
     if (signupBtn) {
         signupBtn.addEventListener('click', () => openModal('signupModal'));
     }
@@ -317,6 +320,11 @@ function setupTopActionButtons() {
     if (loginBtn) {
         loginBtn.addEventListener('click', () => openModal('loginModal'));
     }
+    */
+    
+    // Hide signup/login buttons
+    if (signupBtn) signupBtn.style.display = 'none';
+    if (loginBtn) loginBtn.style.display = 'none';
     
     if (settingBtn) {
         settingBtn.addEventListener('click', () => {
